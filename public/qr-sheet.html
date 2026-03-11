@@ -178,13 +178,13 @@
       { year: 2025, title: '17 anos de amor' },
     ]
 
-    // Base URL — same origin as this sheet, pointing to the main app
-    const base = window.location.origin
+    // Base URL — always points to the correct Render deployment
+    const base = 'https://our-story-n130.onrender.com'
 
     const grid = document.getElementById('grid')
 
     years.forEach(({ year, title }) => {
-      const url = `${base}/?unlock=${year}`
+      const url = `${base}/#unlock-${year}`
 
       const card = document.createElement('div')
       card.className = 'card'

@@ -20,22 +20,20 @@ function unlockYear(year: number) {
   localStorage.setItem('unlockedYears', JSON.stringify([...unlockedYears.value]))
 }
 
-// Handle ?unlock=YEAR URL param — navigate to that year and auto-trigger pack opening
+// Handle #unlock-YEAR hash — navigate to that year and auto-trigger pack opening.
+// Hash-based so Render's SPA rewrite never interferes with the URL.
 onMounted(() => {
-  const params = new URLSearchParams(window.location.search)
-  const unlockParam = params.get('unlock')
-  if (unlockParam) {
-    const year = parseInt(unlockParam)
+  const match = window.location.hash.match(/^#unlock-(\d{4})$/)
+  if (match) {
+    const year = parseInt(match[1]!)
     const pageIdx = pages.findIndex(p => p.year === year)
     if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
       direction.value = 'left'
       currentPage.value = pageIdx + 1
       autoOpenYear.value = year
     }
-    // Clean the URL so reloading doesn't re-trigger
-    const cleanUrl = new URL(window.location.href)
-    cleanUrl.searchParams.delete('unlock')
-    window.history.replaceState({}, '', cleanUrl)
+    // Clean the hash so reloading doesn't re-trigger
+    window.history.replaceState({}, '', window.location.pathname + window.location.search)
   }
 })
 
