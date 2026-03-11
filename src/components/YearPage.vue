@@ -16,6 +16,7 @@ const emit = defineEmits<{
   (e: 'next'): void
   (e: 'unlock'): void
   (e: 'summary'): void
+  (e: 'expand', photos: typeof props.page.photos, idx: number): void
 }>()
 
 // How many photos are currently visible (0 = none, up to page.photos.length)
@@ -159,6 +160,7 @@ async function openPack() {
             :photo="photo"
             :index="i"
             :revealed="revealedCount > i"
+            @expand="$emit('expand', page.photos.slice(0, revealedCount), i)"
           />
         </div>
       </template>
@@ -166,23 +168,23 @@ async function openPack() {
       <!-- Layout: 3 photos -->
       <template v-else-if="page.photos.length === 3">
         <div class="row center">
-          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" />
-          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" />
+          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" @expand="$emit('expand', page.photos.slice(0, revealedCount), 0)" />
+          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" @expand="$emit('expand', page.photos.slice(0, revealedCount), 1)" />
         </div>
         <div class="row center solo">
-          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" />
+          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" @expand="$emit('expand', page.photos.slice(0, revealedCount), 2)" />
         </div>
       </template>
 
       <!-- Layout: 4 photos -->
       <template v-else-if="page.photos.length === 4">
         <div class="row center">
-          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" />
-          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" />
+          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" @expand="$emit('expand', page.photos.slice(0, revealedCount), 0)" />
+          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" @expand="$emit('expand', page.photos.slice(0, revealedCount), 1)" />
         </div>
         <div class="row center">
-          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" />
-          <PhotoSlot :photo="page.photos[3]!" :index="3" :revealed="revealedCount > 3" />
+          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" @expand="$emit('expand', page.photos.slice(0, revealedCount), 2)" />
+          <PhotoSlot :photo="page.photos[3]!" :index="3" :revealed="revealedCount > 3" @expand="$emit('expand', page.photos.slice(0, revealedCount), 3)" />
         </div>
       </template>
     </main>
@@ -349,19 +351,19 @@ async function openPack() {
 /* Header */
 .page-header {
   width: 100%;
-  padding-top: 20px;
-  padding-bottom: 10px;
+  padding-top: 10px;
+  padding-bottom: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   position: relative;
   z-index: 1;
 }
 
 .year-number {
   font-family: 'Playfair Display', serif;
-  font-size: 44px;
+  font-size: 34px;
   font-weight: 700;
   color: #6b3a2a;
   line-height: 1;
@@ -371,7 +373,7 @@ async function openPack() {
 
 .year-title {
   font-family: 'Dancing Script', cursive;
-  font-size: 18px;
+  font-size: 16px;
   color: #8b5e52;
   text-align: center;
 }
@@ -379,7 +381,7 @@ async function openPack() {
 
 .year-subtitle {
   font-family: 'Lato', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 300;
   color: #a88070;
   letter-spacing: 1px;
@@ -387,10 +389,10 @@ async function openPack() {
 }
 
 .header-rule {
-  width: 60px;
-  height: 1.5px;
+  width: 50px;
+  height: 1px;
   background: linear-gradient(90deg, transparent, #c4973b55, transparent);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 /* Photos area */
@@ -401,24 +403,24 @@ async function openPack() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 10px;
   position: relative;
   z-index: 1;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
 .row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   justify-content: center;
 }
 
-/* Polaroid sizing by layout */
-.layout-2 .polaroid { width: 146px; }
-.layout-3 .row:first-child .polaroid { width: 138px; }
-.layout-3 .solo .polaroid { width: 155px; }
-.layout-4 .polaroid { width: 138px; }
+/* Polaroid sizing by layout — larger than before to use the freed space */
+.layout-2 .polaroid { width: 168px; }
+.layout-3 .row:first-child .polaroid { width: 157px; }
+.layout-3 .solo .polaroid { width: 172px; }
+.layout-4 .polaroid { width: 155px; }
 
 /* ── Open Pack button ── */
 .open-pack-wrap {
@@ -496,14 +498,14 @@ async function openPack() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0 14px;
+  padding: 6px 0 10px;
   position: relative;
   z-index: 1;
 }
 
 .nav-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: none;
   border: 1.5px solid rgba(107, 58, 42, 0.25);
   border-radius: 50%;

@@ -8,6 +8,8 @@ const props = defineProps<{
   revealed: boolean
 }>()
 
+const emit = defineEmits<{ (e: 'expand'): void }>()
+
 const animate = ref(false)
 
 watch(() => props.revealed, (val) => {
@@ -27,6 +29,7 @@ function getImageUrl(id: string) {
     class="polaroid"
     :class="{ 'is-revealed': revealed, 'is-animating': animate }"
     :style="{ '--rot': `${photo.rotation}deg` }"
+    @click="revealed && $emit('expand')"
   >
     <div class="photo-area">
       <img v-if="revealed" :src="getImageUrl(photo.id)" :alt="photo.caption" class="photo-img" />
@@ -53,6 +56,11 @@ function getImageUrl(id: string) {
 .polaroid.is-revealed {
   background: #fffef8;
   filter: none;
+  cursor: zoom-in;
+}
+
+.polaroid.is-revealed:active {
+  transform: rotate(var(--rot)) scale(0.96);
 }
 
 .polaroid.is-animating {

@@ -3,7 +3,9 @@ import { ref, onMounted } from 'vue'
 import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
 import AlbumSummary from './components/AlbumSummary.vue'
+import PhotoLightbox from './components/PhotoLightbox.vue'
 import { pages } from './data/album'
+import type { Photo } from './data/album'
 
 // 0 = cover, 1–17 = year pages
 const currentPage = ref(0)
@@ -18,6 +20,16 @@ const autoOpenYear = ref<number | null>(null)
 
 // Summary overlay
 const showSummary = ref(false)
+
+// Photo lightbox
+const lightbox = ref<{ photos: Photo[], idx: number } | null>(null)
+
+function openLightbox(photos: Photo[], idx: number) {
+  lightbox.value = { photos, idx }
+}
+function closeLightbox() {
+  lightbox.value = null
+}
 
 function openSummary() { showSummary.value = true }
 function closeSummary() { showSummary.value = false }
@@ -107,6 +119,7 @@ function onTouchEnd(e: TouchEvent) {
         @next="goNext"
         @unlock="unlockYear(pages[currentPage - 1]!.year)"
         @summary="openSummary"
+        @expand="openLightbox"
       />
 
     </Transition>
@@ -119,6 +132,16 @@ function onTouchEnd(e: TouchEvent) {
         :current-year="currentPage > 0 ? pages[currentPage - 1]!.year : null"
         @go="goToYear"
         @close="closeSummary"
+      />
+    </Transition>
+
+    <!-- Photo lightbox -->
+    <Transition name="lb-fade">
+      <PhotoLightbox
+        v-if="lightbox"
+        :photos="lightbox.photos"
+        :start-index="lightbox.idx"
+        @close="closeLightbox"
       />
     </Transition>
   </div>
@@ -182,4 +205,9 @@ html, body {
 .summary-slide-leave-active { transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
 .summary-slide-enter-from  { opacity: 0; transform: translateY(100%); }
 .summary-slide-leave-to    { opacity: 0; transform: translateY(100%); }
+
+/* ── Lightbox fade ── */
+.lb-fade-enter-active { transition: opacity 0.2s ease; }
+.lb-fade-leave-active { transition: opacity 0.18s ease; }
+.lb-fade-enter-from, .lb-fade-leave-to { opacity: 0; }
 </style>
