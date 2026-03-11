@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { coverData } from '../data/album'
 
-defineEmits<{ (e: 'next'): void }>()
+defineEmits<{ (e: 'next'): void; (e: 'summary'): void }>()
 </script>
 
 <template>
   <div class="cover" @click="$emit('next')">
+    <!-- Map button -->
+    <button class="map-btn" @click.stop="$emit('summary')" aria-label="Ver todos os anos">⊞</button>
+
     <!-- Decorative border -->
     <div class="border-outer">
       <div class="border-inner">
@@ -59,6 +62,28 @@ defineEmits<{ (e: 'next'): void }>()
   position: relative;
   overflow: hidden;
 }
+
+/* Map button */
+.map-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(196, 151, 59, 0.3);
+  border-radius: 8px;
+  font-size: 15px;
+  color: rgba(196, 151, 59, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.map-btn:active { background: rgba(255, 255, 255, 0.12); }
 
 /* Subtle texture overlay */
 .cover::before {

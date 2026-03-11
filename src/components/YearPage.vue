@@ -15,6 +15,7 @@ const emit = defineEmits<{
   (e: 'prev'): void
   (e: 'next'): void
   (e: 'unlock'): void
+  (e: 'summary'): void
 }>()
 
 // How many photos are currently visible (0 = none, up to page.photos.length)
@@ -96,6 +97,11 @@ async function openPack() {
       <span class="deco-item" style="bottom:19%; left:6%; font-size:12px; opacity:0.2; transform:rotate(-6deg)">✿</span>
       <span class="deco-item" style="bottom:15%; right:5%; font-size:11px; opacity:0.22; transform:rotate(18deg)">❀</span>
     </div>
+
+    <!-- Map button (top-right) -->
+    <button class="map-btn" @click="$emit('summary')" aria-label="Ver todos os anos">
+      <span class="map-icon">⊞</span>
+    </button>
 
     <!-- Header -->
     <header class="page-header">
@@ -201,6 +207,34 @@ async function openPack() {
   position: relative;
   overflow: hidden;
 }
+
+/* ── Map button ── */
+.map-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  background: rgba(107, 58, 42, 0.07);
+  border: 1px solid rgba(107, 58, 42, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.map-btn:active { background: rgba(107, 58, 42, 0.14); }
+.bg-blush .map-btn { border-color: rgba(122, 45, 61, 0.15); }
+
+.map-icon {
+  font-size: 15px;
+  color: #8b5e52;
+  line-height: 1;
+}
+.bg-blush .map-icon { color: #9e5e6a; }
 
 /* Background tones */
 .bg-cream { background: #fef9f0; }

@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
+import AlbumSummary from './components/AlbumSummary.vue'
 import { pages } from './data/album'
 
 // 0 = cover, 1–17 = year pages
@@ -12,8 +13,23 @@ const direction = ref<'left' | 'right'>('left')
 const stored = JSON.parse(localStorage.getItem('unlockedYears') || '[]') as number[]
 const unlockedYears = ref<Set<number>>(new Set(stored))
 
-// Year to auto-open pack for (set via ?unlock=YEAR URL param)
+// Year to auto-open pack for (set via #unlock-YEAR hash)
 const autoOpenYear = ref<number | null>(null)
+
+// Summary overlay
+const showSummary = ref(false)
+
+function openSummary() { showSummary.value = true }
+function closeSummary() { showSummary.value = false }
+
+function goToYear(year: number) {
+  const pageIdx = pages.findIndex(p => p.year === year)
+  if (pageIdx !== -1) {
+    direction.value = currentPage.value <= pageIdx + 1 ? 'left' : 'right'
+    currentPage.value = pageIdx + 1
+  }
+  closeSummary()
+}
 
 function unlockYear(year: number) {
   unlockedYears.value.add(year)
@@ -75,6 +91,7 @@ function onTouchEnd(e: TouchEvent) {
         v-if="currentPage === 0"
         key="cover"
         @next="goNext"
+        @summary="openSummary"
       />
 
       <!-- Year pages -->
@@ -89,8 +106,20 @@ function onTouchEnd(e: TouchEvent) {
         @prev="goPrev"
         @next="goNext"
         @unlock="unlockYear(pages[currentPage - 1]!.year)"
+        @summary="openSummary"
       />
 
+    </Transition>
+
+    <!-- Summary overlay — outside Transition so it doesn't slide with pages -->
+    <Transition name="summary-slide">
+      <AlbumSummary
+        v-if="showSummary"
+        :unlocked-years="unlockedYears"
+        :current-year="currentPage > 0 ? pages[currentPage - 1]!.year : null"
+        @go="goToYear"
+        @close="closeSummary"
+      />
     </Transition>
   </div>
 </template>
@@ -147,4 +176,10 @@ html, body {
   transform: translateX(0);
   opacity: 1;
 }
+
+/* ── Summary panel slide-up ── */
+.summary-slide-enter-active { transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.summary-slide-leave-active { transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+.summary-slide-enter-from  { opacity: 0; transform: translateY(100%); }
+.summary-slide-leave-to    { opacity: 0; transform: translateY(100%); }
 </style>
