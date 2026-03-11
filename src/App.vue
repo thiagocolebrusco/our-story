@@ -8,6 +8,15 @@ import { pages } from './data/album'
 const currentPage = ref(0)
 const direction = ref<'left' | 'right'>('left')
 
+// Unlocked years — persisted in localStorage
+const stored = JSON.parse(localStorage.getItem('unlockedYears') || '[]') as number[]
+const unlockedYears = ref<Set<number>>(new Set(stored))
+
+function unlockYear(year: number) {
+  unlockedYears.value.add(year)
+  localStorage.setItem('unlockedYears', JSON.stringify([...unlockedYears.value]))
+}
+
 function goNext() {
   if (currentPage.value < pages.length) {
     direction.value = 'left'
@@ -55,8 +64,10 @@ function onTouchEnd(e: TouchEvent) {
         :page="pages[currentPage - 1]!"
         :pageIndex="currentPage"
         :total="pages.length"
+        :unlocked="unlockedYears.has(pages[currentPage - 1]!.year)"
         @prev="goPrev"
         @next="goNext"
+        @unlock="unlockYear(pages[currentPage - 1]!.year)"
       />
 
     </Transition>

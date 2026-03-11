@@ -1,17 +1,68 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import type { YearPage } from '../data/album'
 import PhotoSlot from './PhotoSlot.vue'
 
-defineProps<{
+const props = defineProps<{
   page: YearPage
   pageIndex: number
   total: number
+  unlocked: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'prev'): void
   (e: 'next'): void
+  (e: 'unlock'): void
 }>()
+
+// How many photos are currently visible (0 = none, up to page.photos.length)
+const revealedCount = ref(props.unlocked ? props.page.photos.length : 0)
+
+// If the page is already unlocked when mounted, show all immediately
+watch(() => props.unlocked, (val) => {
+  if (val) revealedCount.value = props.page.photos.length
+})
+
+// Pack overlay state
+const showOverlay = ref(false)
+const packPhase = ref<'in' | 'jiggle' | 'out'>('in')
+const isOpening = ref(false)
+
+function sleep(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms))
+}
+
+async function openPack() {
+  if (isOpening.value || props.unlocked) return
+  isOpening.value = true
+
+  // Save unlock to parent (persists in localStorage)
+  emit('unlock')
+
+  // Phase 1: pack card appears
+  packPhase.value = 'in'
+  showOverlay.value = true
+  await sleep(850)
+
+  // Phase 2: pack jiggles
+  packPhase.value = 'jiggle'
+  await sleep(650)
+
+  // Phase 3: pack implodes
+  packPhase.value = 'out'
+  await sleep(380)
+
+  showOverlay.value = false
+
+  // Phase 4: photos pop in one by one
+  for (let i = 0; i < props.page.photos.length; i++) {
+    revealedCount.value = i + 1
+    await sleep(370)
+  }
+
+  isOpening.value = false
+}
 </script>
 
 <template>
@@ -50,33 +101,50 @@ defineEmits<{
       <!-- Layout: 2 photos -->
       <template v-if="page.photos.length === 2">
         <div class="row center">
-          <PhotoSlot v-for="(photo, i) in page.photos" :key="photo.id" :photo="photo" :index="i" />
+          <PhotoSlot
+            v-for="(photo, i) in page.photos"
+            :key="photo.id"
+            :photo="photo"
+            :index="i"
+            :revealed="revealedCount > i"
+          />
         </div>
       </template>
 
       <!-- Layout: 3 photos -->
       <template v-else-if="page.photos.length === 3">
         <div class="row center">
-          <PhotoSlot :photo="page.photos[0]!" :index="0" />
-          <PhotoSlot :photo="page.photos[1]!" :index="1" />
+          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" />
+          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" />
         </div>
         <div class="row center solo">
-          <PhotoSlot :photo="page.photos[2]!" :index="2" />
+          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" />
         </div>
       </template>
 
       <!-- Layout: 4 photos -->
       <template v-else-if="page.photos.length === 4">
         <div class="row center">
-          <PhotoSlot :photo="page.photos[0]!" :index="0" />
-          <PhotoSlot :photo="page.photos[1]!" :index="1" />
+          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" />
+          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" />
         </div>
         <div class="row center">
-          <PhotoSlot :photo="page.photos[2]!" :index="2" />
-          <PhotoSlot :photo="page.photos[3]!" :index="3" />
+          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" />
+          <PhotoSlot :photo="page.photos[3]!" :index="3" :revealed="revealedCount > 3" />
         </div>
       </template>
     </main>
+
+    <!-- Open Pack button (visible only when locked) -->
+    <Transition name="btn-fade">
+      <div v-if="!unlocked && !isOpening" class="open-pack-wrap">
+        <button class="open-pack-btn" @click="openPack">
+          <span class="btn-icon">✦</span>
+          <span class="btn-label">Abrir envelope</span>
+          <span class="btn-icon">✦</span>
+        </button>
+      </div>
+    </Transition>
 
     <!-- Navigation -->
     <footer class="page-footer">
@@ -95,6 +163,21 @@ defineEmits<{
       <button class="nav-btn next" @click="$emit('next')" :aria-label="'Próxima página'">›</button>
     </footer>
 
+    <!-- Pack opening overlay -->
+    <Transition name="overlay-fade">
+      <div v-if="showOverlay" class="pack-overlay">
+        <div class="pack-card" :class="`pack-${packPhase}`">
+          <div class="pack-shine"></div>
+          <div class="pack-content">
+            <div class="pack-top-label">Our Story</div>
+            <div class="pack-year-text">{{ page.year }}</div>
+            <div class="pack-deco">✦ ♡ ✦</div>
+            <div class="pack-bottom-label">{{ page.title }}</div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -111,12 +194,8 @@ defineEmits<{
 }
 
 /* Background tones */
-.bg-cream {
-  background: #fef9f0;
-}
-.bg-blush {
-  background: #fdf3f2;
-}
+.bg-cream { background: #fef9f0; }
+.bg-blush { background: #fdf3f2; }
 
 /* Subtle grain/texture feel */
 .year-page::before {
@@ -139,9 +218,7 @@ defineEmits<{
   color: #8b5e52;
   font-style: normal;
 }
-.bg-blush .deco-item {
-  color: #9e5e6a;
-}
+.bg-blush .deco-item { color: #9e5e6a; }
 
 /* Header */
 .page-header {
@@ -164,9 +241,7 @@ defineEmits<{
   line-height: 1;
   letter-spacing: -1px;
 }
-.bg-blush .year-number {
-  color: #7a2d3d;
-}
+.bg-blush .year-number { color: #7a2d3d; }
 
 .year-title {
   font-family: 'Dancing Script', cursive;
@@ -174,9 +249,7 @@ defineEmits<{
   color: #8b5e52;
   text-align: center;
 }
-.bg-blush .year-title {
-  color: #9e5e6a;
-}
+.bg-blush .year-title { color: #9e5e6a; }
 
 .year-subtitle {
   font-family: 'Lato', sans-serif;
@@ -216,18 +289,80 @@ defineEmits<{
 }
 
 /* Polaroid sizing by layout */
-.layout-2 .polaroid {
-  width: 146px;
+.layout-2 .polaroid { width: 146px; }
+.layout-3 .row:first-child .polaroid { width: 138px; }
+.layout-3 .solo .polaroid { width: 155px; }
+.layout-4 .polaroid { width: 138px; }
+
+/* ── Open Pack button ── */
+.open-pack-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 2px;
+  position: relative;
+  z-index: 2;
 }
-.layout-3 .row:first-child .polaroid {
-  width: 138px;
+
+.open-pack-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 26px;
+  background: linear-gradient(135deg, #5c2235 0%, #7a2d3d 50%, #5c2235 100%);
+  border: 1.5px solid #c4973b;
+  border-radius: 30px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 3px 14px rgba(92, 34, 53, 0.45), inset 0 1px 0 rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.layout-3 .solo .polaroid {
-  width: 155px;
+
+.open-pack-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: btn-shimmer 2s infinite;
 }
-.layout-4 .polaroid {
-  width: 138px;
+
+@keyframes btn-shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
 }
+
+.open-pack-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 8px rgba(92, 34, 53, 0.4);
+}
+
+.btn-icon {
+  font-size: 10px;
+  color: #c4973b;
+  opacity: 0.9;
+}
+
+.btn-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: #f5e6c8;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.btn-fade-enter-active { transition: opacity 0.3s, transform 0.3s; }
+.btn-fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.btn-fade-enter-from  { opacity: 0; transform: translateY(8px); }
+.btn-fade-leave-to    { opacity: 0; transform: translateY(8px); }
 
 /* Footer */
 .page-footer {
@@ -296,5 +431,153 @@ defineEmits<{
 .dot.active {
   background: #c4973b;
   transform: scale(1.3);
+}
+
+/* ── Pack Overlay ── */
+.pack-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 5, 10, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(3px);
+}
+
+.overlay-fade-enter-active { transition: opacity 0.25s ease; }
+.overlay-fade-leave-active { transition: opacity 0.3s ease; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+
+/* Pack card */
+.pack-card {
+  width: 180px;
+  height: 270px;
+  background: linear-gradient(160deg, #5c1a2a 0%, #3d0f1c 40%, #2a0a14 100%);
+  border: 1.5px solid #c4973b;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 40px rgba(196, 151, 59, 0.3),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Shine sweep */
+.pack-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    125deg,
+    transparent 30%,
+    rgba(196, 151, 59, 0.15) 48%,
+    rgba(255, 240, 180, 0.2) 50%,
+    rgba(196, 151, 59, 0.15) 52%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  animation: pack-shine-sweep 1.2s ease infinite;
+}
+@keyframes pack-shine-sweep {
+  0%   { background-position: 200% center; }
+  100% { background-position: -100% center; }
+}
+
+/* Gold border corners */
+.pack-card::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(196, 151, 59, 0.35);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.pack-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  padding: 16px;
+  text-align: center;
+}
+
+.pack-top-label {
+  font-family: 'Dancing Script', cursive;
+  font-size: 20px;
+  color: #c4973b;
+  letter-spacing: 0.5px;
+}
+
+.pack-year-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: #f5e6c8;
+  line-height: 1;
+  letter-spacing: -2px;
+  text-shadow: 0 0 20px rgba(196, 151, 59, 0.4);
+}
+
+.pack-deco {
+  font-size: 12px;
+  color: #c4973b;
+  letter-spacing: 4px;
+  opacity: 0.8;
+}
+
+.pack-bottom-label {
+  font-family: 'Lato', sans-serif;
+  font-size: 9px;
+  font-weight: 300;
+  color: rgba(245, 230, 200, 0.6);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  max-width: 120px;
+  line-height: 1.4;
+}
+
+/* ── Pack animation phases ── */
+
+/* Phase: in — card bursts onto screen */
+.pack-in {
+  animation: pack-enter 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes pack-enter {
+  0%   { transform: scale(0.1) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.06) rotate(1deg); opacity: 1; }
+  80%  { transform: scale(0.97) rotate(-0.5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Phase: jiggle — pack shakes like it's bursting */
+.pack-jiggle {
+  animation: pack-shake 0.6s ease both;
+}
+@keyframes pack-shake {
+  0%   { transform: rotate(0deg) scale(1); }
+  15%  { transform: rotate(-6deg) scale(1.03); }
+  30%  { transform: rotate(7deg) scale(0.97); }
+  45%  { transform: rotate(-5deg) scale(1.02); }
+  60%  { transform: rotate(4deg) scale(0.98); }
+  75%  { transform: rotate(-2deg) scale(1.01); }
+  90%  { transform: rotate(2deg); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* Phase: out — pack implodes */
+.pack-out {
+  animation: pack-exit 0.35s cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+@keyframes pack-exit {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  40%  { transform: scale(1.2) rotate(3deg); opacity: 0.9; filter: brightness(1.8); }
+  100% { transform: scale(0) rotate(-5deg); opacity: 0; filter: brightness(3); }
 }
 </style>
