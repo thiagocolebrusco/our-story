@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
 import { pages } from './data/album'
@@ -12,10 +12,32 @@ const direction = ref<'left' | 'right'>('left')
 const stored = JSON.parse(localStorage.getItem('unlockedYears') || '[]') as number[]
 const unlockedYears = ref<Set<number>>(new Set(stored))
 
+// Year to auto-open pack for (set via ?unlock=YEAR URL param)
+const autoOpenYear = ref<number | null>(null)
+
 function unlockYear(year: number) {
   unlockedYears.value.add(year)
   localStorage.setItem('unlockedYears', JSON.stringify([...unlockedYears.value]))
 }
+
+// Handle ?unlock=YEAR URL param — navigate to that year and auto-trigger pack opening
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  const unlockParam = params.get('unlock')
+  if (unlockParam) {
+    const year = parseInt(unlockParam)
+    const pageIdx = pages.findIndex(p => p.year === year)
+    if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
+      direction.value = 'left'
+      currentPage.value = pageIdx + 1
+      autoOpenYear.value = year
+    }
+    // Clean the URL so reloading doesn't re-trigger
+    const cleanUrl = new URL(window.location.href)
+    cleanUrl.searchParams.delete('unlock')
+    window.history.replaceState({}, '', cleanUrl)
+  }
+})
 
 function goNext() {
   if (currentPage.value < pages.length) {
@@ -65,6 +87,7 @@ function onTouchEnd(e: TouchEvent) {
         :pageIndex="currentPage"
         :total="pages.length"
         :unlocked="unlockedYears.has(pages[currentPage - 1]!.year)"
+        :auto-open="autoOpenYear === pages[currentPage - 1]!.year"
         @prev="goPrev"
         @next="goNext"
         @unlock="unlockYear(pages[currentPage - 1]!.year)"

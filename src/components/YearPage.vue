@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import type { YearPage } from '../data/album'
 import PhotoSlot from './PhotoSlot.vue'
 
@@ -8,6 +8,7 @@ const props = defineProps<{
   pageIndex: number
   total: number
   unlocked: boolean
+  autoOpen?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -22,6 +23,14 @@ const revealedCount = ref(props.unlocked ? props.page.photos.length : 0)
 // If the page is already unlocked when mounted, show all immediately
 watch(() => props.unlocked, (val) => {
   if (val) revealedCount.value = props.page.photos.length
+})
+
+// Auto-open pack if navigated via QR code URL
+onMounted(() => {
+  if (props.autoOpen && !props.unlocked) {
+    // Wait for the page slide-in transition to finish before opening
+    setTimeout(openPack, 750)
+  }
 })
 
 // Pack overlay state
