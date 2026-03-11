@@ -5,6 +5,23 @@ export interface Photo {
   size: 'normal' | 'large'
 }
 
+// Add a trivia question to any year to gate the pack opening.
+// The answer check is case-insensitive and trims whitespace.
+// Optionally provide a `hint` shown after a wrong answer.
+// Leave `trivia` undefined to open the pack without a gate.
+//
+// Example:
+//   trivia: {
+//     question: 'Qual foi o nome do restaurante do nosso primeiro encontro?',
+//     answer: 'La Pasta',
+//     hint: 'Começa com "La"...',
+//   }
+export interface TriviaQuestion {
+  question: string
+  answer: string
+  hint?: string
+}
+
 export interface YearPage {
   year: number
   title: string
@@ -12,6 +29,7 @@ export interface YearPage {
   photos: Photo[]
   bgTone: 'cream' | 'blush'
   decoration?: 'stars' | 'hearts' | 'flowers' | 'none'
+  trivia?: TriviaQuestion
 }
 
 export const coverData = {

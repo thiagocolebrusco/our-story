@@ -36,8 +36,33 @@ onMounted(() => {
 
 // Pack overlay state
 const showOverlay = ref(false)
-const packPhase = ref<'in' | 'jiggle' | 'out'>('in')
+const packPhase = ref<'trivia' | 'in' | 'jiggle' | 'out'>('in')
 const isOpening = ref(false)
+
+// Trivia state
+const triviaAnswer = ref('')
+const triviaState = ref<'idle' | 'wrong' | 'correct'>('idle')
+const triviaHintVisible = ref(false)
+let triviaResolve: (() => void) | null = null
+
+function waitForCorrectAnswer() {
+  return new Promise<void>(resolve => { triviaResolve = resolve })
+}
+
+function checkAnswer() {
+  if (!props.page.trivia) return
+  const input = triviaAnswer.value.trim().toLowerCase()
+  const expected = props.page.trivia.answer.trim().toLowerCase()
+  if (input === expected) {
+    triviaState.value = 'correct'
+    triviaResolve?.()
+    triviaResolve = null
+  } else {
+    triviaState.value = 'wrong'
+    triviaHintVisible.value = !!props.page.trivia.hint
+    setTimeout(() => { triviaState.value = 'idle' }, 900)
+  }
+}
 
 function sleep(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms))
@@ -46,6 +71,18 @@ function sleep(ms: number) {
 async function openPack() {
   if (isOpening.value || props.unlocked) return
   isOpening.value = true
+
+  // If this year has a trivia gate, show it first
+  if (props.page.trivia) {
+    triviaAnswer.value = ''
+    triviaState.value = 'idle'
+    triviaHintVisible.value = false
+    packPhase.value = 'trivia'
+    showOverlay.value = true
+    await waitForCorrectAnswer()
+    // Brief success pause before pack bursts in
+    await sleep(600)
+  }
 
   // Save unlock to parent (persists in localStorage)
   emit('unlock')
@@ -181,7 +218,52 @@ async function openPack() {
     <!-- Pack opening overlay -->
     <Transition name="overlay-fade">
       <div v-if="showOverlay" class="pack-overlay">
-        <div class="pack-card" :class="`pack-${packPhase}`">
+
+        <!-- Trivia card (shown before pack opens) -->
+        <div
+          v-if="packPhase === 'trivia'"
+          class="pack-card trivia-card"
+          :class="{
+            'trivia-wrong': triviaState === 'wrong',
+            'trivia-correct': triviaState === 'correct',
+          }"
+        >
+          <div class="pack-shine"></div>
+          <div class="trivia-content">
+            <div class="trivia-tag">✦ Pergunta ✦</div>
+            <div class="trivia-year">{{ page.year }}</div>
+            <div class="trivia-question">{{ page.trivia?.question }}</div>
+
+            <Transition name="hint-fade">
+              <div v-if="triviaHintVisible && page.trivia?.hint" class="trivia-hint">
+                {{ page.trivia.hint }}
+              </div>
+            </Transition>
+
+            <div v-if="triviaState === 'correct'" class="trivia-success">
+              ♡ Correto!
+            </div>
+            <template v-else>
+              <input
+                v-model="triviaAnswer"
+                class="trivia-input"
+                type="text"
+                placeholder="sua resposta…"
+                :class="{ shake: triviaState === 'wrong' }"
+                @keyup.enter="checkAnswer"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+              />
+              <button class="trivia-submit" @click="checkAnswer">
+                confirmar ✦
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Pack card (normal open animation) -->
+        <div v-else class="pack-card" :class="`pack-${packPhase}`">
           <div class="pack-shine"></div>
           <div class="pack-content">
             <div class="pack-top-label">Our Story</div>
@@ -190,6 +272,7 @@ async function openPack() {
             <div class="pack-bottom-label">{{ page.title }}</div>
           </div>
         </div>
+
       </div>
     </Transition>
 
@@ -584,6 +667,144 @@ async function openPack() {
   text-transform: uppercase;
   max-width: 120px;
   line-height: 1.4;
+}
+
+/* ── Trivia card ── */
+.trivia-card {
+  animation: pack-enter 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.trivia-card.trivia-wrong {
+  animation: trivia-shake 0.5s ease both;
+}
+
+.trivia-card.trivia-correct {
+  animation: trivia-success 0.4s ease both;
+}
+
+@keyframes trivia-shake {
+  0%, 100% { transform: translateX(0); }
+  18%  { transform: translateX(-10px); }
+  36%  { transform: translateX(10px); }
+  54%  { transform: translateX(-7px); }
+  72%  { transform: translateX(7px); }
+  88%  { transform: translateX(-3px); }
+}
+
+@keyframes trivia-success {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); filter: brightness(1.3); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.trivia-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.trivia-tag {
+  font-family: 'Dancing Script', cursive;
+  font-size: 14px;
+  color: #c4973b;
+  letter-spacing: 0.5px;
+}
+
+.trivia-year {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #f5e6c8;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.trivia-question {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+  color: rgba(245, 230, 200, 0.9);
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+}
+
+.trivia-hint {
+  font-family: 'Lato', sans-serif;
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(196, 151, 59, 0.75);
+  letter-spacing: 0.3px;
+}
+
+.hint-fade-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.hint-fade-enter-from   { opacity: 0; transform: translateY(-4px); }
+
+.trivia-input {
+  width: 100%;
+  background: rgba(255, 253, 248, 0.1);
+  border: 1px solid rgba(196, 151, 59, 0.5);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: 'Lato', sans-serif;
+  font-size: 14px;
+  color: #f5e6c8;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  -webkit-appearance: none;
+}
+
+.trivia-input::placeholder {
+  color: rgba(245, 230, 200, 0.35);
+  font-style: italic;
+}
+
+.trivia-input:focus {
+  border-color: rgba(196, 151, 59, 0.9);
+  background: rgba(255, 253, 248, 0.15);
+}
+
+.trivia-input.shake {
+  border-color: rgba(220, 80, 80, 0.7);
+}
+
+.trivia-submit {
+  width: 100%;
+  padding: 9px 12px;
+  background: linear-gradient(135deg, rgba(196, 151, 59, 0.25), rgba(196, 151, 59, 0.15));
+  border: 1px solid rgba(196, 151, 59, 0.6);
+  border-radius: 8px;
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: #c4973b;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+
+.trivia-submit:active {
+  background: rgba(196, 151, 59, 0.3);
+}
+
+.trivia-success {
+  font-family: 'Dancing Script', cursive;
+  font-size: 28px;
+  color: #c4973b;
+  letter-spacing: 1px;
+  animation: success-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes success-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* ── Pack animation phases ── */
