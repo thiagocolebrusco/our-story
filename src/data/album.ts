@@ -46,6 +46,11 @@ export const pages: YearPage[] = [
     subtitle: 'Onde nossa história começou',
     bgTone: 'cream',
     decoration: 'hearts',
+    trivia: {
+      question: 'Em que ano nos conhecemos?',
+      answer: '2009',
+      hint: 'É o ano desta página 😄',
+    },
     photos: [
       { id: '2009-1', caption: 'O dia em que tudo mudou ♡', rotation: -3, size: 'normal' },
       { id: '2009-2', caption: 'Nossa primeira aventura', rotation: 2.5, size: 'normal' },
