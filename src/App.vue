@@ -130,48 +130,48 @@ onMounted(() => {
   if (match) {
     const token = match[1]!
 
-    if (albumMode.value === 'year') {
-      // Year mode: token → year
-      const year = tokenToYear[token]
-      if (year !== undefined) {
-        const pageIdx = pages.findIndex(p => p.year === year)
-        if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
-          direction.value = 'left'
-          currentPage.value = pageIdx + 1
-          autoOpenYear.value = year
-        }
+    // Auto-detect token type — works regardless of current albumMode setting
+    const year = tokenToYear[token]
+    const pack = tokenToPack[token]
+
+    if (year !== undefined) {
+      // Year token → year mode flow
+      albumMode.value = 'year'
+      const pageIdx = pages.findIndex(p => p.year === year)
+      if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
+        direction.value = 'left'
+        currentPage.value = pageIdx + 1
+        autoOpenYear.value = year
       }
-    } else {
-      // Pack mode: token → pack reveal overlay
-      const pack = tokenToPack[token]
-      if (pack) {
-        const newPhotoIds = pack.photos
-          .map(ph => ph.photoId)
-          .filter(id => !unlockedPhotos.value.has(id))
+    } else if (pack) {
+      // Pack token → pack reveal overlay (auto-switch to pack mode)
+      albumMode.value = 'pack'
+      const newPhotoIds = pack.photos
+        .map(ph => ph.photoId)
+        .filter(id => !unlockedPhotos.value.has(id))
 
-        if (newPhotoIds.length > 0) {
-          // Persist new photos
-          unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
-          localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
+      if (newPhotoIds.length > 0) {
+        // Persist new photos
+        unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
+        localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
 
-          // Build reveal items (include ALL pack photos, not just new ones)
-          const items: RevealItem[] = pack.photos.map(ph => {
-            const yearPage = pages.find(p => p.year === ph.year)!
-            const photo = yearPage.photos.find(p => p.id === ph.photoId)!
-            return {
-              year: ph.year,
-              yearTitle: yearPage.title,
-              photoId: ph.photoId,
-              caption: photo.caption,
-            }
-          })
+        // Build reveal items (include ALL pack photos, not just new ones)
+        const items: RevealItem[] = pack.photos.map(ph => {
+          const yearPage = pages.find(p => p.year === ph.year)!
+          const photo = yearPage.photos.find(p => p.id === ph.photoId)!
+          return {
+            year: ph.year,
+            yearTitle: yearPage.title,
+            photoId: ph.photoId,
+            caption: photo.caption,
+          }
+        })
 
-          // First year with a newly unlocked photo
-          const firstEntry = pack.photos.find(ph => newPhotoIds.includes(ph.photoId))!
+        // First year with a newly unlocked photo
+        const firstEntry = pack.photos.find(ph => newPhotoIds.includes(ph.photoId))!
 
-          // Show the reveal overlay instead of navigating directly
-          packRevealData.value = { items, firstYear: firstEntry.year }
-        }
+        // Show the reveal overlay instead of navigating directly
+        packRevealData.value = { items, firstYear: firstEntry.year }
       }
     }
 
