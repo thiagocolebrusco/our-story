@@ -135,6 +135,18 @@
       letter-spacing: 3px;
     }
 
+    /* ── Clickable card link ── */
+    a.card {
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    a.card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    a.card:active { transform: scale(0.97); }
+
     /* ── Print styles ── */
     @media print {
       body { background: white; padding: 12px; }
@@ -186,8 +198,11 @@
     years.forEach(({ token, title }) => {
       const url = `${base}/#unlock-${token}`
 
-      const card = document.createElement('div')
+      const card = document.createElement('a')
       card.className = 'card'
+      card.href = url
+      card.target = '_blank'
+      card.rel = 'noopener'
       card.innerHTML = `
         <div class="qr-wrap" id="qr-${token}"></div>
         <div class="card-label">${title}</div>
