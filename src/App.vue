@@ -1,22 +1,58 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
 import AlbumSummary from './components/AlbumSummary.vue'
 import PhotoLightbox from './components/PhotoLightbox.vue'
-import { pages, tokenToYear } from './data/album'
+import { pages, tokenToYear, tokenToPack } from './data/album'
 import type { Photo } from './data/album'
 
 // 0 = cover, 1–17 = year pages
 const currentPage = ref(0)
 const direction = ref<'left' | 'right'>('left')
 
-// Unlocked years — persisted in localStorage
+// ── Album mode ───────────────────────────────────────────────────────────────
+type AlbumMode = 'year' | 'pack'
+const albumMode = ref<AlbumMode>(
+  (localStorage.getItem('albumMode') as AlbumMode | null) ?? 'year'
+)
+watch(albumMode, val => localStorage.setItem('albumMode', val))
+
+// ── Year mode state ──────────────────────────────────────────────────────────
 const stored = JSON.parse(localStorage.getItem('unlockedYears') || '[]') as number[]
 const unlockedYears = ref<Set<number>>(new Set(stored))
 
-// Year to auto-open pack for (set via #unlock-YEAR hash)
+// ── Pack mode state ──────────────────────────────────────────────────────────
+const storedPhotos = JSON.parse(localStorage.getItem('unlockedPhotos') || '[]') as string[]
+const unlockedPhotos = ref<Set<string>>(new Set(storedPhotos))
+
+// Year to auto-open pack for (set via hash)
 const autoOpenYear = ref<number | null>(null)
+// Pack mode: IDs of photos to animate on the auto-open year
+const autoOpenPackPhotoIds = ref<string[]>([])
+
+// ── Derived helpers ──────────────────────────────────────────────────────────
+function isYearComplete(year: number): boolean {
+  if (albumMode.value === 'year') return unlockedYears.value.has(year)
+  const p = pages.find(pg => pg.year === year)!
+  return p.photos.every(ph => unlockedPhotos.value.has(ph.id))
+}
+
+// Photo IDs already revealed for a given year page (drives YearPage initial state)
+const currentPreRevealed = computed<string[]>(() => {
+  if (currentPage.value === 0) return []
+  const page = pages[currentPage.value - 1]!
+  if (albumMode.value === 'year') {
+    return unlockedYears.value.has(page.year) ? page.photos.map(p => p.id) : []
+  }
+  return page.photos.filter(p => unlockedPhotos.value.has(p.id)).map(p => p.id)
+})
+
+// Effective unlocked-year set for AlbumSummary (works in both modes)
+const effectiveUnlockedYears = computed<Set<number>>(() => {
+  if (albumMode.value === 'year') return unlockedYears.value
+  return new Set(pages.filter(p => isYearComplete(p.year)).map(p => p.year))
+})
 
 // Summary overlay
 const showSummary = ref(false)
@@ -40,6 +76,8 @@ function resetAll() {
   }
   unlockedYears.value = new Set()
   localStorage.removeItem('unlockedYears')
+  unlockedPhotos.value = new Set()
+  localStorage.removeItem('unlockedPhotos')
   currentPage.value = 0
   autoOpenYear.value = null
   closeAdmin()
@@ -68,26 +106,57 @@ function goToYear(year: number) {
 }
 
 function unlockYear(year: number) {
-  unlockedYears.value.add(year)
+  if (albumMode.value !== 'year') return
+  unlockedYears.value = new Set([...unlockedYears.value, year])
   localStorage.setItem('unlockedYears', JSON.stringify([...unlockedYears.value]))
 }
 
-// Handle #unlock-TOKEN hash — resolve opaque token to a year, then navigate.
-// Token-based so the URL reveals nothing about which year it unlocks.
+// ── Hash handler ─────────────────────────────────────────────────────────────
 onMounted(() => {
   const match = window.location.hash.match(/^#unlock-([a-z0-9]+)$/)
   if (match) {
     const token = match[1]!
-    const year = tokenToYear[token]
-    if (year !== undefined) {
-      const pageIdx = pages.findIndex(p => p.year === year)
-      if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
-        direction.value = 'left'
-        currentPage.value = pageIdx + 1
-        autoOpenYear.value = year
+
+    if (albumMode.value === 'year') {
+      // Year mode: token → year
+      const year = tokenToYear[token]
+      if (year !== undefined) {
+        const pageIdx = pages.findIndex(p => p.year === year)
+        if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
+          direction.value = 'left'
+          currentPage.value = pageIdx + 1
+          autoOpenYear.value = year
+        }
+      }
+    } else {
+      // Pack mode: token → pack
+      const pack = tokenToPack[token]
+      if (pack) {
+        const newPhotoIds = pack.photos
+          .map(ph => ph.photoId)
+          .filter(id => !unlockedPhotos.value.has(id))
+
+        if (newPhotoIds.length > 0) {
+          // Persist new photos
+          unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
+          localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
+
+          // Navigate to first year with newly-revealed photos
+          const firstEntry = pack.photos.find(ph => newPhotoIds.includes(ph.photoId))!
+          const pageIdx = pages.findIndex(p => p.year === firstEntry.year)
+          if (pageIdx !== -1) {
+            direction.value = 'left'
+            currentPage.value = pageIdx + 1
+            autoOpenYear.value = firstEntry.year
+            autoOpenPackPhotoIds.value = pack.photos
+              .filter(ph => ph.year === firstEntry.year && newPhotoIds.includes(ph.photoId))
+              .map(ph => ph.photoId)
+          }
+        }
       }
     }
-    // Clean the hash so reloading doesn't re-trigger
+
+    // Clean hash so reload doesn't re-trigger
     window.history.replaceState({}, '', window.location.pathname + window.location.search)
   }
 })
@@ -141,7 +210,10 @@ function onTouchEnd(e: TouchEvent) {
         :page="pages[currentPage - 1]!"
         :pageIndex="currentPage"
         :total="pages.length"
-        :unlocked="unlockedYears.has(pages[currentPage - 1]!.year)"
+        :unlocked="isYearComplete(pages[currentPage - 1]!.year)"
+        :pre-revealed="currentPreRevealed"
+        :album-mode="albumMode"
+        :pack-photo-ids="albumMode === 'pack' && autoOpenYear === pages[currentPage - 1]!.year ? autoOpenPackPhotoIds : undefined"
         :auto-open="autoOpenYear === pages[currentPage - 1]!.year"
         @prev="goPrev"
         @next="goNext"
@@ -156,7 +228,7 @@ function onTouchEnd(e: TouchEvent) {
     <Transition name="summary-slide">
       <AlbumSummary
         v-if="showSummary"
-        :unlocked-years="unlockedYears"
+        :unlocked-years="effectiveUnlockedYears"
         :current-year="currentPage > 0 ? pages[currentPage - 1]!.year : null"
         @go="goToYear"
         @close="closeSummary"
@@ -183,6 +255,20 @@ function onTouchEnd(e: TouchEvent) {
           </div>
 
           <div class="admin-body">
+            <!-- Mode toggle -->
+            <div class="admin-section">
+              <p class="admin-desc">Modo do álbum</p>
+              <div class="admin-mode-row">
+                <button class="mode-btn" :class="{ active: albumMode === 'year' }" @click="albumMode = 'year'">Por ano</button>
+                <button class="mode-btn" :class="{ active: albumMode === 'pack' }" @click="albumMode = 'pack'">Por pacote</button>
+              </div>
+              <p class="admin-mode-hint">
+                {{ albumMode === 'year' ? 'Cada QR abre um ano completo' : 'Cada QR abre fotos de anos diferentes' }}
+              </p>
+            </div>
+
+            <div class="admin-divider"></div>
+
             <Transition name="admin-confirm-fade" mode="out-in">
               <div v-if="!adminConfirm" key="btn" class="admin-action">
                 <p class="admin-desc">Reinicia todo o progresso do álbum.</p>
@@ -324,7 +410,57 @@ html, body {
 .admin-close:active { background: rgba(255,255,255,0.1); }
 
 .admin-body {
-  padding: 20px 20px 0;
+  padding: 16px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 16px;
+}
+
+.admin-divider {
+  height: 1px;
+  background: rgba(196, 151, 59, 0.12);
+  margin-bottom: 16px;
+}
+
+.admin-mode-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  color: rgba(245, 230, 200, 0.45);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.mode-btn.active {
+  background: rgba(196, 151, 59, 0.15);
+  border-color: rgba(196, 151, 59, 0.5);
+  color: #c4973b;
+}
+.mode-btn:active { opacity: 0.7; }
+
+.admin-mode-hint {
+  font-family: 'Lato', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(245, 230, 200, 0.3);
+  letter-spacing: 0.2px;
+  line-height: 1.4;
 }
 
 .admin-action {

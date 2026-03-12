@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import type { YearPage } from '../data/album'
+import { ref, reactive, watch, onMounted } from 'vue'
+import type { YearPage, Photo } from '../data/album'
 import PhotoSlot from './PhotoSlot.vue'
 
 const props = defineProps<{
   page: YearPage
   pageIndex: number
   total: number
+  /** Year is fully complete (all photos revealed). Used for gift + year-mode guard. */
   unlocked: boolean
+  /** Photo IDs already revealed before this mount (drives initial state). */
+  preRevealed: string[]
+  albumMode: 'year' | 'pack'
+  /** Pack mode: IDs of photos to animate when auto-opening. */
+  packPhotoIds?: string[]
   autoOpen?: boolean
 }>()
 
@@ -16,21 +22,36 @@ const emit = defineEmits<{
   (e: 'next'): void
   (e: 'unlock'): void
   (e: 'summary'): void
-  (e: 'expand', photos: typeof props.page.photos, idx: number): void
+  (e: 'expand', photos: Photo[], idx: number): void
 }>()
 
-// How many photos are currently visible (0 = none, up to page.photos.length)
-const revealedCount = ref(props.unlocked ? props.page.photos.length : 0)
+// ── Per-photo revealed state ─────────────────────────────────────────────────
+const revealed = reactive(
+  props.page.photos.map(p => props.preRevealed.includes(p.id))
+)
 
-// If the page is already unlocked when mounted, show all immediately
-watch(() => props.unlocked, (val) => {
-  if (val) revealedCount.value = props.page.photos.length
+// Sync if new photos are revealed externally (e.g. user already on this page
+// when another pack unlocks a photo here — rare but handled correctly)
+watch(() => props.preRevealed, (ids) => {
+  props.page.photos.forEach((p, i) => {
+    if (ids.includes(p.id)) revealed[i] = true
+  })
 })
 
-// Auto-open pack if navigated via QR code URL
+// ── Expand / lightbox helpers ────────────────────────────────────────────────
+function expandPhoto(photoIdx: number) {
+  const revealedPhotos = props.page.photos.filter((_, i) => revealed[i])
+  // Map the clicked photo's position to its index within revealedPhotos
+  let revealedIdx = 0
+  for (let i = 0; i < photoIdx; i++) {
+    if (revealed[i]) revealedIdx++
+  }
+  emit('expand', revealedPhotos, revealedIdx)
+}
+
+// ── Auto-open ────────────────────────────────────────────────────────────────
 onMounted(() => {
   if (props.autoOpen && !props.unlocked) {
-    // Wait for the page slide-in transition to finish before opening
     setTimeout(openPack, 750)
   }
 })
@@ -73,10 +94,27 @@ function sleep(ms: number) {
 }
 
 async function openPack() {
-  if (isOpening.value || props.unlocked) return
+  if (isOpening.value) return
+
+  // Year mode: skip if whole year already unlocked
+  if (props.albumMode === 'year' && props.unlocked) return
+
+  // Pack mode: only proceed if there are genuinely new photos to reveal
+  let indicesToReveal: number[] = []
+  if (props.albumMode === 'pack') {
+    const newIds = (props.packPhotoIds ?? []).filter(id => !props.preRevealed.includes(id))
+    if (newIds.length === 0) return
+    indicesToReveal = props.page.photos.reduce<number[]>((acc, p, i) => {
+      if (newIds.includes(p.id)) acc.push(i)
+      return acc
+    }, [])
+  } else {
+    indicesToReveal = props.page.photos.map((_, i) => i)
+  }
+
   isOpening.value = true
 
-  // If this year has a trivia gate, show it first
+  // Trivia gate (same for both modes)
   if (props.page.trivia) {
     triviaAnswer.value = ''
     triviaState.value = 'idle'
@@ -84,31 +122,25 @@ async function openPack() {
     packPhase.value = 'trivia'
     showOverlay.value = true
     await waitForCorrectAnswer()
-    // Brief success pause before pack bursts in
     await sleep(600)
   }
 
-  // Save unlock to parent (persists in localStorage)
-  emit('unlock')
+  // Year mode: persist unlock to parent
+  if (props.albumMode === 'year') emit('unlock')
 
-  // Phase 1: pack card appears
+  // Pack card animation
   packPhase.value = 'in'
   showOverlay.value = true
   await sleep(850)
-
-  // Phase 2: pack jiggles
   packPhase.value = 'jiggle'
   await sleep(650)
-
-  // Phase 3: pack implodes
   packPhase.value = 'out'
   await sleep(380)
-
   showOverlay.value = false
 
-  // Phase 4: photos pop in one by one
-  for (let i = 0; i < props.page.photos.length; i++) {
-    revealedCount.value = i + 1
+  // Reveal photos one by one
+  for (const idx of indicesToReveal) {
+    revealed[idx] = true
     await sleep(370)
   }
 
@@ -162,8 +194,8 @@ async function openPack() {
             :key="photo.id"
             :photo="photo"
             :index="i"
-            :revealed="revealedCount > i"
-            @expand="$emit('expand', page.photos.slice(0, revealedCount), i)"
+            :revealed="!!revealed[i]"
+            @expand="expandPhoto(i)"
           />
         </div>
       </template>
@@ -171,23 +203,23 @@ async function openPack() {
       <!-- Layout: 3 photos -->
       <template v-else-if="page.photos.length === 3">
         <div class="row center">
-          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" @expand="$emit('expand', page.photos.slice(0, revealedCount), 0)" />
-          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" @expand="$emit('expand', page.photos.slice(0, revealedCount), 1)" />
+          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="!!revealed[0]" @expand="expandPhoto(0)" />
+          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="!!revealed[1]" @expand="expandPhoto(1)" />
         </div>
         <div class="row center solo">
-          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" @expand="$emit('expand', page.photos.slice(0, revealedCount), 2)" />
+          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="!!revealed[2]" @expand="expandPhoto(2)" />
         </div>
       </template>
 
       <!-- Layout: 4 photos -->
       <template v-else-if="page.photos.length === 4">
         <div class="row center">
-          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="revealedCount > 0" @expand="$emit('expand', page.photos.slice(0, revealedCount), 0)" />
-          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="revealedCount > 1" @expand="$emit('expand', page.photos.slice(0, revealedCount), 1)" />
+          <PhotoSlot :photo="page.photos[0]!" :index="0" :revealed="!!revealed[0]" @expand="expandPhoto(0)" />
+          <PhotoSlot :photo="page.photos[1]!" :index="1" :revealed="!!revealed[1]" @expand="expandPhoto(1)" />
         </div>
         <div class="row center">
-          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="revealedCount > 2" @expand="$emit('expand', page.photos.slice(0, revealedCount), 2)" />
-          <PhotoSlot :photo="page.photos[3]!" :index="3" :revealed="revealedCount > 3" @expand="$emit('expand', page.photos.slice(0, revealedCount), 3)" />
+          <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="!!revealed[2]" @expand="expandPhoto(2)" />
+          <PhotoSlot :photo="page.photos[3]!" :index="3" :revealed="!!revealed[3]" @expand="expandPhoto(3)" />
         </div>
       </template>
     </main>
@@ -289,9 +321,9 @@ async function openPack() {
           <div class="pack-shine"></div>
           <div class="pack-content">
             <div class="pack-top-label">Our Story</div>
-            <div class="pack-year-text">{{ page.year }}</div>
+            <div class="pack-year-text">{{ albumMode === 'year' ? page.year : '✦' }}</div>
             <div class="pack-deco">✦ ♡ ✦</div>
-            <div class="pack-bottom-label">{{ page.title }}</div>
+            <div class="pack-bottom-label">{{ albumMode === 'year' ? page.title : 'memórias especiais' }}</div>
           </div>
         </div>
 

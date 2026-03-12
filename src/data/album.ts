@@ -50,8 +50,50 @@ export interface YearPage {
   gift?: Gift
 }
 
-// Maps opaque token → year number for URL unlock handling
+// Maps opaque token → year number for URL unlock handling (year mode)
 export const tokenToYear: Record<string, number> = {}
+
+// ── Pack mode ────────────────────────────────────────────────────────────────
+// In pack mode each QR code unlocks a pack of photos from DIFFERENT years.
+// A year is "complete" once all its photos are individually unlocked.
+// Gifts trigger on year completion regardless of which mode is active.
+//
+// To add/change pack contents, edit the `packs` array below.
+// Each photo ID must appear in exactly one pack.
+export interface PackPhoto {
+  year: number
+  photoId: string
+}
+
+export interface Pack {
+  id: string
+  token: string   // opaque unlock token used in QR codes
+  photos: PackPhoto[]
+}
+
+export const packs: Pack[] = [
+  { id: 'pack-1',  token: 'a2kp7nmx', photos: [{ year: 2009, photoId: '2009-1' }, { year: 2015, photoId: '2015-1' }, { year: 2022, photoId: '2022-1' }] },
+  { id: 'pack-2',  token: 'b8vr3qhc', photos: [{ year: 2009, photoId: '2009-2' }, { year: 2016, photoId: '2016-1' }, { year: 2023, photoId: '2023-1' }] },
+  { id: 'pack-3',  token: 'c5tz9wjd', photos: [{ year: 2009, photoId: '2009-3' }, { year: 2017, photoId: '2017-1' }, { year: 2024, photoId: '2024-1' }] },
+  { id: 'pack-4',  token: 'd7mx4bkr', photos: [{ year: 2010, photoId: '2010-1' }, { year: 2013, photoId: '2013-1' }, { year: 2021, photoId: '2021-1' }] },
+  { id: 'pack-5',  token: 'e3nf8ypq', photos: [{ year: 2010, photoId: '2010-2' }, { year: 2014, photoId: '2014-1' }, { year: 2025, photoId: '2025-1' }] },
+  { id: 'pack-6',  token: 'f9cs2vwt', photos: [{ year: 2011, photoId: '2011-1' }, { year: 2018, photoId: '2018-1' }, { year: 2022, photoId: '2022-2' }] },
+  { id: 'pack-7',  token: 'g4hb7znk', photos: [{ year: 2011, photoId: '2011-2' }, { year: 2019, photoId: '2019-1' }, { year: 2023, photoId: '2023-2' }] },
+  { id: 'pack-8',  token: 'h6qr5mcj', photos: [{ year: 2011, photoId: '2011-3' }, { year: 2020, photoId: '2020-1' }, { year: 2025, photoId: '2025-2' }] },
+  { id: 'pack-9',  token: 'i2wp9tfx', photos: [{ year: 2012, photoId: '2012-1' }, { year: 2013, photoId: '2013-2' }, { year: 2017, photoId: '2017-2' }] },
+  { id: 'pack-10', token: 'j8nd3kcv', photos: [{ year: 2012, photoId: '2012-2' }, { year: 2016, photoId: '2016-2' }, { year: 2021, photoId: '2021-2' }] },
+  { id: 'pack-11', token: 'k5fv6rxb', photos: [{ year: 2013, photoId: '2013-3' }, { year: 2019, photoId: '2019-2' }, { year: 2024, photoId: '2024-2' }] },
+  { id: 'pack-12', token: 'l7th2qnm', photos: [{ year: 2013, photoId: '2013-4' }, { year: 2015, photoId: '2015-2' }, { year: 2022, photoId: '2022-3' }] },
+  { id: 'pack-13', token: 'm4jx8bpw', photos: [{ year: 2014, photoId: '2014-2' }, { year: 2018, photoId: '2018-2' }, { year: 2023, photoId: '2023-3' }] },
+  { id: 'pack-14', token: 'n9kc3fzr', photos: [{ year: 2014, photoId: '2014-3' }, { year: 2020, photoId: '2020-2' }, { year: 2025, photoId: '2025-3' }] },
+  { id: 'pack-15', token: 'o6mb5ytj', photos: [{ year: 2016, photoId: '2016-3' }, { year: 2021, photoId: '2021-3' }, { year: 2022, photoId: '2022-4' }] },
+  { id: 'pack-16', token: 'p3qn7hxc', photos: [{ year: 2017, photoId: '2017-3' }, { year: 2019, photoId: '2019-3' }] },
+  { id: 'pack-17', token: 'q8rz4vdk', photos: [{ year: 2017, photoId: '2017-4' }, { year: 2025, photoId: '2025-4' }] },
+]
+
+// Maps opaque token → pack (pack mode)
+export const tokenToPack: Record<string, Pack> = {}
+packs.forEach(p => { tokenToPack[p.token] = p })
 
 export const coverData = {
   title: 'Our Story',
