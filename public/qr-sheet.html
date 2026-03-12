@@ -159,23 +159,23 @@
 
   <script>
     const years = [
-      { year: 2009, title: 'O começo de tudo' },
-      { year: 2010, title: 'Descobrindo um ao outro' },
-      { year: 2011, title: 'Mil memórias' },
-      { year: 2012, title: 'Nosso lar' },
-      { year: 2013, title: 'Um ano inesquecível' },
-      { year: 2014, title: 'Crescendo juntos' },
-      { year: 2015, title: 'Simplicidade' },
-      { year: 2016, title: 'Sempre do lado' },
-      { year: 2017, title: 'Cada vez melhor' },
-      { year: 2018, title: 'Só nós dois' },
-      { year: 2019, title: 'Dias dourados' },
-      { year: 2020, title: 'Juntos por tudo' },
-      { year: 2021, title: 'Recomeçando' },
-      { year: 2022, title: 'Novos capítulos' },
-      { year: 2023, title: 'Mais fortes' },
-      { year: 2024, title: 'Mais uma volta ao sol' },
-      { year: 2025, title: '17 anos de amor' },
+      { year: 2009, token: 'm7k2pxr9', title: 'O começo de tudo' },
+      { year: 2010, token: 'v4nq8bzt', title: 'Descobrindo um ao outro' },
+      { year: 2011, token: 'h3wf6ycd', title: 'Mil memórias' },
+      { year: 2012, token: 'j9xs2mpl', title: 'Nosso lar' },
+      { year: 2013, token: 'r5bt7nqk', title: 'Um ano inesquecível' },
+      { year: 2014, token: 'g8vz4wcf', title: 'Crescendo juntos' },
+      { year: 2015, token: 'd2hn9kxr', title: 'Simplicidade' },
+      { year: 2016, token: 'p6mf3ybz', title: 'Sempre do lado' },
+      { year: 2017, token: 'w4cs8tqn', title: 'Cada vez melhor' },
+      { year: 2018, token: 'k7rx2hjv', title: 'Só nós dois' },
+      { year: 2019, token: 'f9qb5znm', title: 'Dias dourados' },
+      { year: 2020, token: 't3wy6pkd', title: 'Juntos por tudo' },
+      { year: 2021, token: 'x8nv4bcr', title: 'Recomeçando' },
+      { year: 2022, token: 'q2km9fzt', title: 'Novos capítulos' },
+      { year: 2023, token: 'b6ph3wxs', title: 'Mais fortes' },
+      { year: 2024, token: 'c5fj7qnr', title: 'Mais uma volta ao sol' },
+      { year: 2025, token: 'z9dr4mkb', title: '17 anos de amor' },
     ]
 
     // Base URL — always points to the correct Render deployment
@@ -183,21 +183,20 @@
 
     const grid = document.getElementById('grid')
 
-    years.forEach(({ year, title }) => {
-      const url = `${base}/#unlock-${year}`
+    years.forEach(({ token, title }) => {
+      const url = `${base}/#unlock-${token}`
 
       const card = document.createElement('div')
       card.className = 'card'
       card.innerHTML = `
-        <div class="card-year">${year}</div>
-        <div class="qr-wrap" id="qr-${year}"></div>
+        <div class="qr-wrap" id="qr-${token}"></div>
         <div class="card-label">${title}</div>
         <div class="card-deco">✦ ♡ ✦</div>
       `
       grid.appendChild(card)
 
       // Generate QR code into the placeholder div
-      new QRCode(document.getElementById(`qr-${year}`), {
+      new QRCode(document.getElementById(`qr-${token}`), {
         text: url,
         width: 98,
         height: 98,

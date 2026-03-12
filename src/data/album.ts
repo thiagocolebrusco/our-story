@@ -24,6 +24,7 @@ export interface TriviaQuestion {
 
 export interface YearPage {
   year: number
+  token: string  // opaque unlock token — used in QR codes, doesn't reveal the year
   title: string
   subtitle?: string
   photos: Photo[]
@@ -31,6 +32,9 @@ export interface YearPage {
   decoration?: 'stars' | 'hearts' | 'flowers' | 'none'
   trivia?: TriviaQuestion
 }
+
+// Maps opaque token → year number for URL unlock handling
+export const tokenToYear: Record<string, number> = {}
 
 export const coverData = {
   title: 'Our Story',
@@ -42,6 +46,7 @@ export const coverData = {
 export const pages: YearPage[] = [
   {
     year: 2009,
+    token: 'm7k2pxr9',
     title: 'O começo de tudo',
     subtitle: 'Onde nossa história começou',
     bgTone: 'cream',
@@ -59,6 +64,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2010,
+    token: 'v4nq8bzt',
     title: 'Descobrindo um ao outro',
     bgTone: 'blush',
     decoration: 'none',
@@ -69,6 +75,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2011,
+    token: 'h3wf6ycd',
     title: 'Mil memórias',
     bgTone: 'cream',
     decoration: 'stars',
@@ -80,6 +87,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2012,
+    token: 'j9xs2mpl',
     title: 'Nosso lar',
     bgTone: 'blush',
     decoration: 'hearts',
@@ -90,6 +98,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2013,
+    token: 'r5bt7nqk',
     title: 'Um ano inesquecível',
     bgTone: 'cream',
     decoration: 'flowers',
@@ -102,6 +111,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2014,
+    token: 'g8vz4wcf',
     title: 'Crescendo juntos',
     bgTone: 'blush',
     decoration: 'none',
@@ -113,6 +123,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2015,
+    token: 'd2hn9kxr',
     title: 'Simplicidade',
     bgTone: 'cream',
     decoration: 'stars',
@@ -123,6 +134,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2016,
+    token: 'p6mf3ybz',
     title: 'Sempre do lado',
     bgTone: 'blush',
     decoration: 'hearts',
@@ -134,6 +146,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2017,
+    token: 'w4cs8tqn',
     title: 'Cada vez melhor',
     bgTone: 'cream',
     decoration: 'flowers',
@@ -146,6 +159,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2018,
+    token: 'k7rx2hjv',
     title: 'Só nós dois',
     bgTone: 'blush',
     decoration: 'none',
@@ -156,6 +170,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2019,
+    token: 'f9qb5znm',
     title: 'Dias dourados',
     bgTone: 'cream',
     decoration: 'stars',
@@ -167,6 +182,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2020,
+    token: 't3wy6pkd',
     title: 'Juntos por tudo',
     bgTone: 'blush',
     decoration: 'hearts',
@@ -177,6 +193,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2021,
+    token: 'x8nv4bcr',
     title: 'Recomeçando',
     bgTone: 'cream',
     decoration: 'flowers',
@@ -188,6 +205,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2022,
+    token: 'q2km9fzt',
     title: 'Novos capítulos',
     bgTone: 'blush',
     decoration: 'stars',
@@ -200,6 +218,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2023,
+    token: 'b6ph3wxs',
     title: 'Mais fortes',
     bgTone: 'cream',
     decoration: 'hearts',
@@ -211,6 +230,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2024,
+    token: 'c5fj7qnr',
     title: 'Mais uma volta ao sol',
     bgTone: 'blush',
     decoration: 'none',
@@ -221,6 +241,7 @@ export const pages: YearPage[] = [
   },
   {
     year: 2025,
+    token: 'z9dr4mkb',
     title: '17 anos de amor',
     subtitle: 'E eu escolheria de novo ♡',
     bgTone: 'cream',
@@ -233,3 +254,6 @@ export const pages: YearPage[] = [
     ],
   },
 ]
+
+// Build token → year lookup from the pages array
+pages.forEach(p => { tokenToYear[p.token] = p.year })

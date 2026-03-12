@@ -4,7 +4,7 @@ import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
 import AlbumSummary from './components/AlbumSummary.vue'
 import PhotoLightbox from './components/PhotoLightbox.vue'
-import { pages } from './data/album'
+import { pages, tokenToYear } from './data/album'
 import type { Photo } from './data/album'
 
 // 0 = cover, 1–17 = year pages
@@ -48,17 +48,20 @@ function unlockYear(year: number) {
   localStorage.setItem('unlockedYears', JSON.stringify([...unlockedYears.value]))
 }
 
-// Handle #unlock-YEAR hash — navigate to that year and auto-trigger pack opening.
-// Hash-based so Render's SPA rewrite never interferes with the URL.
+// Handle #unlock-TOKEN hash — resolve opaque token to a year, then navigate.
+// Token-based so the URL reveals nothing about which year it unlocks.
 onMounted(() => {
-  const match = window.location.hash.match(/^#unlock-(\d{4})$/)
+  const match = window.location.hash.match(/^#unlock-([a-z0-9]+)$/)
   if (match) {
-    const year = parseInt(match[1]!)
-    const pageIdx = pages.findIndex(p => p.year === year)
-    if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
-      direction.value = 'left'
-      currentPage.value = pageIdx + 1
-      autoOpenYear.value = year
+    const token = match[1]!
+    const year = tokenToYear[token]
+    if (year !== undefined) {
+      const pageIdx = pages.findIndex(p => p.year === year)
+      if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
+        direction.value = 'left'
+        currentPage.value = pageIdx + 1
+        autoOpenYear.value = year
+      }
     }
     // Clean the hash so reloading doesn't re-trigger
     window.history.replaceState({}, '', window.location.pathname + window.location.search)
