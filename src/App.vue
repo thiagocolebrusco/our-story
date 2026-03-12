@@ -4,6 +4,8 @@ import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
 import AlbumSummary from './components/AlbumSummary.vue'
 import PhotoLightbox from './components/PhotoLightbox.vue'
+import PackRevealOverlay from './components/PackRevealOverlay.vue'
+import type { RevealItem } from './components/PackRevealOverlay.vue'
 import { pages, tokenToYear, tokenToPack } from './data/album'
 import type { Photo } from './data/album'
 
@@ -26,10 +28,11 @@ const unlockedYears = ref<Set<number>>(new Set(stored))
 const storedPhotos = JSON.parse(localStorage.getItem('unlockedPhotos') || '[]') as string[]
 const unlockedPhotos = ref<Set<string>>(new Set(storedPhotos))
 
-// Year to auto-open pack for (set via hash)
+// Year to auto-open pack for (set via hash, year mode only)
 const autoOpenYear = ref<number | null>(null)
-// Pack mode: IDs of photos to animate on the auto-open year
-const autoOpenPackPhotoIds = ref<string[]>([])
+
+// Pack mode: data for the full-screen reveal overlay
+const packRevealData = ref<{ items: RevealItem[]; firstYear: number } | null>(null)
 
 // ── Derived helpers ──────────────────────────────────────────────────────────
 function isYearComplete(year: number): boolean {
@@ -80,7 +83,17 @@ function resetAll() {
   localStorage.removeItem('unlockedPhotos')
   currentPage.value = 0
   autoOpenYear.value = null
+  packRevealData.value = null
   closeAdmin()
+}
+
+function onPackGo(year: number) {
+  packRevealData.value = null
+  const pageIdx = pages.findIndex(p => p.year === year)
+  if (pageIdx !== -1) {
+    direction.value = 'left'
+    currentPage.value = pageIdx + 1
+  }
 }
 
 // Photo lightbox
@@ -129,7 +142,7 @@ onMounted(() => {
         }
       }
     } else {
-      // Pack mode: token → pack
+      // Pack mode: token → pack reveal overlay
       const pack = tokenToPack[token]
       if (pack) {
         const newPhotoIds = pack.photos
@@ -141,17 +154,23 @@ onMounted(() => {
           unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
           localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
 
-          // Navigate to first year with newly-revealed photos
+          // Build reveal items (include ALL pack photos, not just new ones)
+          const items: RevealItem[] = pack.photos.map(ph => {
+            const yearPage = pages.find(p => p.year === ph.year)!
+            const photo = yearPage.photos.find(p => p.id === ph.photoId)!
+            return {
+              year: ph.year,
+              yearTitle: yearPage.title,
+              photoId: ph.photoId,
+              caption: photo.caption,
+            }
+          })
+
+          // First year with a newly unlocked photo
           const firstEntry = pack.photos.find(ph => newPhotoIds.includes(ph.photoId))!
-          const pageIdx = pages.findIndex(p => p.year === firstEntry.year)
-          if (pageIdx !== -1) {
-            direction.value = 'left'
-            currentPage.value = pageIdx + 1
-            autoOpenYear.value = firstEntry.year
-            autoOpenPackPhotoIds.value = pack.photos
-              .filter(ph => ph.year === firstEntry.year && newPhotoIds.includes(ph.photoId))
-              .map(ph => ph.photoId)
-          }
+
+          // Show the reveal overlay instead of navigating directly
+          packRevealData.value = { items, firstYear: firstEntry.year }
         }
       }
     }
@@ -213,8 +232,7 @@ function onTouchEnd(e: TouchEvent) {
         :unlocked="isYearComplete(pages[currentPage - 1]!.year)"
         :pre-revealed="currentPreRevealed"
         :album-mode="albumMode"
-        :pack-photo-ids="albumMode === 'pack' && autoOpenYear === pages[currentPage - 1]!.year ? autoOpenPackPhotoIds : undefined"
-        :auto-open="autoOpenYear === pages[currentPage - 1]!.year"
+        :auto-open="albumMode === 'year' && autoOpenYear === pages[currentPage - 1]!.year"
         @prev="goPrev"
         @next="goNext"
         @unlock="unlockYear(pages[currentPage - 1]!.year)"
@@ -242,6 +260,16 @@ function onTouchEnd(e: TouchEvent) {
         :photos="lightbox.photos"
         :start-index="lightbox.idx"
         @close="closeLightbox"
+      />
+    </Transition>
+
+    <!-- Pack reveal overlay (pack mode, shown after scanning a QR) -->
+    <Transition name="pack-reveal-fade">
+      <PackRevealOverlay
+        v-if="packRevealData"
+        :items="packRevealData.items"
+        :first-year="packRevealData.firstYear"
+        @go="onPackGo"
       />
     </Transition>
 
@@ -547,4 +575,9 @@ html, body {
 .admin-confirm-fade-leave-active { transition: opacity 0.1s ease; }
 .admin-confirm-fade-enter-from   { opacity: 0; transform: translateX(10px); }
 .admin-confirm-fade-leave-to     { opacity: 0; }
+
+/* ── Pack reveal overlay transition ── */
+.pack-reveal-fade-enter-active { transition: opacity 0.35s ease; }
+.pack-reveal-fade-leave-active { transition: opacity 0.25s ease; }
+.pack-reveal-fade-enter-from, .pack-reveal-fade-leave-to { opacity: 0; }
 </style>

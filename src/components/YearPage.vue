@@ -12,8 +12,7 @@ const props = defineProps<{
   /** Photo IDs already revealed before this mount (drives initial state). */
   preRevealed: string[]
   albumMode: 'year' | 'pack'
-  /** Pack mode: IDs of photos to animate when auto-opening. */
-  packPhotoIds?: string[]
+  /** Year mode only: trigger pack-open animation on mount */
   autoOpen?: boolean
 }>()
 
@@ -95,26 +94,13 @@ function sleep(ms: number) {
 
 async function openPack() {
   if (isOpening.value) return
-
-  // Year mode: skip if whole year already unlocked
-  if (props.albumMode === 'year' && props.unlocked) return
-
-  // Pack mode: only proceed if there are genuinely new photos to reveal
-  let indicesToReveal: number[] = []
-  if (props.albumMode === 'pack') {
-    const newIds = (props.packPhotoIds ?? []).filter(id => !props.preRevealed.includes(id))
-    if (newIds.length === 0) return
-    indicesToReveal = props.page.photos.reduce<number[]>((acc, p, i) => {
-      if (newIds.includes(p.id)) acc.push(i)
-      return acc
-    }, [])
-  } else {
-    indicesToReveal = props.page.photos.map((_, i) => i)
-  }
+  // Only used in year mode (pack mode reveals are handled by PackRevealOverlay in App.vue)
+  if (props.albumMode !== 'year') return
+  if (props.unlocked) return
 
   isOpening.value = true
 
-  // Trivia gate (same for both modes)
+  // Trivia gate
   if (props.page.trivia) {
     triviaAnswer.value = ''
     triviaState.value = 'idle'
@@ -125,8 +111,8 @@ async function openPack() {
     await sleep(600)
   }
 
-  // Year mode: persist unlock to parent
-  if (props.albumMode === 'year') emit('unlock')
+  // Persist unlock to parent
+  emit('unlock')
 
   // Pack card animation
   packPhase.value = 'in'
@@ -138,8 +124,8 @@ async function openPack() {
   await sleep(380)
   showOverlay.value = false
 
-  // Reveal photos one by one
-  for (const idx of indicesToReveal) {
+  // Reveal all photos one by one
+  for (let idx = 0; idx < props.page.photos.length; idx++) {
     revealed[idx] = true
     await sleep(370)
   }
