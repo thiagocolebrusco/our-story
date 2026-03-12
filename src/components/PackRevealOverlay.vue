@@ -112,7 +112,9 @@ onMounted(runAnimation)
               class="photo-card"
               :style="`--rot: ${ROTATIONS[i] ?? 0}deg`"
             >
-              <div class="photo-img-area"></div>
+              <div class="photo-img-area">
+                <img :src="`https://picsum.photos/seed/${item.photoId}/300/255`" :alt="item.caption" class="photo-img" />
+              </div>
               <div class="photo-label">
                 <div class="photo-year-num">{{ item.year }}</div>
                 <div class="photo-caption-text">{{ item.caption }}</div>
@@ -385,12 +387,11 @@ onMounted(runAnimation)
   overflow: hidden;
 }
 
-/* Subtle shimmer inside photo placeholder */
-.photo-img-area::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 35% 30%, rgba(201, 151, 107, 0.15) 0%, transparent 60%);
+.photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .photo-label {
