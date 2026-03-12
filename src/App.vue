@@ -6,6 +6,7 @@ import AlbumSummary from './components/AlbumSummary.vue'
 import PhotoLightbox from './components/PhotoLightbox.vue'
 import PackRevealOverlay from './components/PackRevealOverlay.vue'
 import type { RevealItem } from './components/PackRevealOverlay.vue'
+import LandingPage from './components/LandingPage.vue'
 import { pages, tokenToYear, tokenToPack } from './data/album'
 import type { Photo } from './data/album'
 
@@ -56,6 +57,14 @@ const effectiveUnlockedYears = computed<Set<number>>(() => {
   if (albumMode.value === 'year') return unlockedYears.value
   return new Set(pages.filter(p => isYearComplete(p.year)).map(p => p.year))
 })
+
+// Landing page (shown once on first visit)
+const showLanding = ref(localStorage.getItem('hasSeenLanding') !== 'true')
+
+function dismissLanding() {
+  showLanding.value = false
+  localStorage.setItem('hasSeenLanding', 'true')
+}
 
 // Summary overlay
 const showSummary = ref(false)
@@ -175,6 +184,9 @@ onMounted(() => {
       }
     }
 
+    // If she scanned a QR link, skip the landing page
+    dismissLanding()
+
     // Clean hash so reload doesn't re-trigger
     window.history.replaceState({}, '', window.location.pathname + window.location.search)
   }
@@ -262,6 +274,11 @@ function onTouchEnd(e: TouchEvent) {
         :start-index="lightbox.idx"
         @close="closeLightbox"
       />
+    </Transition>
+
+    <!-- Landing page (first visit only) -->
+    <Transition name="landing-fade">
+      <LandingPage v-if="showLanding" @enter="dismissLanding" />
     </Transition>
 
     <!-- Pack reveal overlay (pack mode, shown after scanning a QR) -->
@@ -576,6 +593,11 @@ html, body {
 .admin-confirm-fade-leave-active { transition: opacity 0.1s ease; }
 .admin-confirm-fade-enter-from   { opacity: 0; transform: translateX(10px); }
 .admin-confirm-fade-leave-to     { opacity: 0; }
+
+/* ── Landing page transition ── */
+.landing-fade-enter-active { transition: opacity 0.4s ease; }
+.landing-fade-leave-active { transition: opacity 0.5s ease; }
+.landing-fade-enter-from, .landing-fade-leave-to { opacity: 0; }
 
 /* ── Pack reveal overlay transition ── */
 .pack-reveal-fade-enter-active { transition: opacity 0.35s ease; }
