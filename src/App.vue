@@ -248,6 +248,7 @@ function onTouchEnd(e: TouchEvent) {
         v-if="showSummary"
         :unlocked-years="effectiveUnlockedYears"
         :current-year="currentPage > 0 ? pages[currentPage - 1]!.year : null"
+        :unlocked-photos="albumMode === 'pack' ? unlockedPhotos : undefined"
         @go="goToYear"
         @close="closeSummary"
       />

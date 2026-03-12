@@ -4,6 +4,7 @@ import { pages } from '../data/album'
 const props = defineProps<{
   unlockedYears: Set<number>
   currentYear: number | null
+  unlockedPhotos?: Set<string>
 }>()
 
 const emit = defineEmits<{
@@ -13,6 +14,17 @@ const emit = defineEmits<{
 
 function unlockedCount() {
   return pages.filter(p => props.unlockedYears.has(p.year)).length
+}
+
+function photoCount(year: number): { revealed: number; total: number } {
+  const page = pages.find(p => p.year === year)!
+  const total = page.photos.length
+  if (!props.unlockedPhotos) {
+    const revealed = props.unlockedYears.has(year) ? total : 0
+    return { revealed, total }
+  }
+  const revealed = page.photos.filter(ph => props.unlockedPhotos!.has(ph.id)).length
+  return { revealed, total }
 }
 </script>
 
@@ -55,6 +67,13 @@ function unlockedCount() {
           </div>
           <div class="card-year">{{ page.year }}</div>
           <div class="card-title">{{ page.title }}</div>
+          <div
+            v-if="photoCount(page.year).revealed > 0"
+            class="card-photo-count"
+            :class="{ complete: photoCount(page.year).revealed === photoCount(page.year).total }"
+          >
+            {{ photoCount(page.year).revealed }}/{{ photoCount(page.year).total }}
+          </div>
         </button>
       </div>
 
@@ -234,6 +253,19 @@ function unlockedCount() {
 
 .year-card:not(.is-unlocked) .card-title {
   opacity: 0.4;
+}
+
+.card-photo-count {
+  font-family: 'Lato', sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  color: rgba(107, 58, 42, 0.5);
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+.card-photo-count.complete {
+  color: #c4973b;
 }
 
 /* ── Close button ── */
