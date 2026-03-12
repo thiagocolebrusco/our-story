@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Story — Pacotes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@600&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fef9f0;
+      font-family: 'Lato', sans-serif;
+      padding: 32px 24px;
+      color: #3d1f14;
+    }
+
+    /* ── Page header ── */
+    .sheet-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .sheet-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 36px;
+      color: #5c2235;
+    }
+    .sheet-subtitle {
+      font-family: 'Lato', sans-serif;
+      font-weight: 300;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: #a88070;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+    .sheet-rule {
+      width: 80px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, #c4973b, transparent);
+      margin: 10px auto 0;
+    }
+
+    /* ── Print button ── */
+    .print-btn {
+      display: block;
+      margin: 0 auto 32px;
+      padding: 10px 28px;
+      background: linear-gradient(135deg, #5c2235, #7a2d3d);
+      border: 1.5px solid #c4973b;
+      border-radius: 24px;
+      color: #f5e6c8;
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      font-style: italic;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+    .print-btn:hover { opacity: 0.85; }
+
+    /* ── Grid of pack cards ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ── Individual card ── */
+    .card {
+      background: linear-gradient(160deg, #5c1a2a 0%, #3d0f1c 40%, #2a0a14 100%);
+      border: 1.5px solid #c4973b;
+      border-radius: 10px;
+      padding: 14px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      break-inside: avoid;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    /* Inner gold border */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border: 1px solid rgba(196, 151, 59, 0.3);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .card-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 11px;
+      font-weight: 400;
+      font-style: italic;
+      color: rgba(196, 151, 59, 0.75);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .card-star {
+      font-size: 18px;
+      color: #e8c87a;
+      line-height: 1;
+    }
+
+    .qr-wrap {
+      width: 110px;
+      height: 110px;
+      background: #fffdf8;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+
+    .qr-wrap canvas,
+    .qr-wrap img {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .card-deco {
+      font-size: 8px;
+      color: rgba(196, 151, 59, 0.6);
+      letter-spacing: 3px;
+    }
+
+    /* ── Clickable card link ── */
+    a.card {
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    a.card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    a.card:active { transform: scale(0.97); }
+
+    /* ── Print styles ── */
+    @media print {
+      body { background: white; padding: 12px; }
+      .print-btn { display: none; }
+      .sheet-header { margin-bottom: 20px; }
+      .grid { gap: 12px; }
+      .card { box-shadow: none; border-color: #c4973b; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sheet-header">
+    <div class="sheet-title">Our Story</div>
+    <div class="sheet-subtitle">17 Pacotes · Thiago & Mayara</div>
+    <div class="sheet-rule"></div>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">✦ Imprimir pacotes ✦</button>
+
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const packs = [
+      { id: 1,  token: 'a2kp7nmx' },
+      { id: 2,  token: 'b8vr3qhc' },
+      { id: 3,  token: 'c5tz9wjd' },
+      { id: 4,  token: 'd7mx4bkr' },
+      { id: 5,  token: 'e3nf8ypq' },
+      { id: 6,  token: 'f9cs2vwt' },
+      { id: 7,  token: 'g4hb7znk' },
+      { id: 8,  token: 'h6qr5mcj' },
+      { id: 9,  token: 'i2wp9tfx' },
+      { id: 10, token: 'j8nd3kcv' },
+      { id: 11, token: 'k5fv6rxb' },
+      { id: 12, token: 'l7th2qnm' },
+      { id: 13, token: 'm4jx8bpw' },
+      { id: 14, token: 'n9kc3fzr' },
+      { id: 15, token: 'o6mb5ytj' },
+      { id: 16, token: 'p3qn7hxc' },
+      { id: 17, token: 'q8rz4vdk' },
+    ]
+
+    // Base URL — always points to the correct Render deployment
+    const base = 'https://our-story-n130.onrender.com'
+
+    const grid = document.getElementById('grid')
+
+    packs.forEach(({ id, token }) => {
+      const url = `${base}/#unlock-${token}`
+
+      const card = document.createElement('a')
+      card.className = 'card'
+      card.href = url
+      card.target = '_blank'
+      card.rel = 'noopener'
+      card.innerHTML = `
+        <div class="card-number">Pacote ${id}</div>
+        <div class="qr-wrap" id="qr-${token}"></div>
+        <div class="card-deco">✦ ♡ ✦</div>
+      `
+      grid.appendChild(card)
+
+      new QRCode(document.getElementById(`qr-${token}`), {
+        text: url,
+        width: 98,
+        height: 98,
+        colorDark: '#2a0a14',
+        colorLight: '#fffdf8',
+        correctLevel: QRCode.CorrectLevel.M,
+      })
+    })
+  </script>
+</body>
+</html>
