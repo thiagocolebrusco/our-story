@@ -22,6 +22,22 @@ export interface TriviaQuestion {
   hint?: string
 }
 
+// Attach a gift to any year. The gift button appears only after the pack is opened.
+// `image` can be a URL or a path relative to /public (e.g. '/gifts/jantar.jpg').
+// `title` is optional — defaults to "Um presente especial ♡".
+//
+// Example:
+//   gift: {
+//     title: 'Jantar surpresa',
+//     image: '/gifts/jantar.jpg',
+//     description: 'Uma noite especial só para nós dois ♡',
+//   }
+export interface Gift {
+  title?: string
+  image: string
+  description: string
+}
+
 export interface YearPage {
   year: number
   token: string  // opaque unlock token — used in QR codes, doesn't reveal the year
@@ -31,6 +47,7 @@ export interface YearPage {
   bgTone: 'cream' | 'blush'
   decoration?: 'stars' | 'hearts' | 'flowers' | 'none'
   trivia?: TriviaQuestion
+  gift?: Gift
 }
 
 // Maps opaque token → year number for URL unlock handling
@@ -246,6 +263,11 @@ export const pages: YearPage[] = [
     subtitle: 'E eu escolheria de novo ♡',
     bgTone: 'cream',
     decoration: 'flowers',
+    gift: {
+      title: 'Um presente especial ♡',
+      image: 'https://picsum.photos/seed/gift2025/600/400',
+      description: 'Substitua isso com a descrição do seu presente aqui. Pode ser um jantar, uma viagem, qualquer coisa especial que você tenha preparado para ela.',
+    },
     photos: [
       { id: '2025-1', caption: '17 anos ♡', rotation: -2, size: 'normal' },
       { id: '2025-2', caption: 'E eu escolheria de novo', rotation: 3, size: 'normal' },

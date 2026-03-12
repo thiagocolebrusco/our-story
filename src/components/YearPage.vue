@@ -35,6 +35,9 @@ onMounted(() => {
   }
 })
 
+// Gift popup state
+const showGift = ref(false)
+
 // Pack overlay state
 const showOverlay = ref(false)
 const packPhase = ref<'trivia' | 'in' | 'jiggle' | 'out'>('in')
@@ -205,6 +208,34 @@ async function openPack() {
       </div>
       <button class="nav-btn next" @click="$emit('next')" :aria-label="'Próxima página'">›</button>
     </footer>
+
+    <!-- Gift button — appears after unlock if page has a gift -->
+    <Transition name="gift-pop">
+      <button
+        v-if="unlocked && page.gift"
+        class="gift-btn"
+        @click.stop="showGift = true"
+        aria-label="Ver presente"
+      >
+        <span class="gift-icon">🎁</span>
+      </button>
+    </Transition>
+
+    <!-- Gift popup -->
+    <Transition name="gift-overlay-fade">
+      <div v-if="showGift && page.gift" class="gift-overlay" @click.self="showGift = false">
+        <div class="gift-card">
+          <button class="gift-close" @click="showGift = false">✕</button>
+          <div class="gift-image-wrap">
+            <img :src="page.gift.image" :alt="page.gift.title || 'Presente'" class="gift-image" />
+          </div>
+          <div class="gift-body">
+            <div class="gift-title">{{ page.gift.title || 'Um presente especial ♡' }}</div>
+            <p class="gift-description">{{ page.gift.description }}</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Pack opening overlay -->
     <Transition name="overlay-fade">
@@ -479,6 +510,132 @@ async function openPack() {
   background: #c4973b;
   transform: scale(1.3);
 }
+
+/* ── Gift button ── */
+.gift-btn {
+  position: absolute;
+  bottom: 58px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #5c1a2a, #3d0f1c);
+  border: 1.5px solid #c4973b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 3px 12px rgba(92, 34, 53, 0.5), 0 0 0 3px rgba(196, 151, 59, 0.15);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.gift-btn:active {
+  transform: scale(0.93);
+  box-shadow: 0 1px 6px rgba(92, 34, 53, 0.4);
+}
+.gift-icon { font-size: 20px; line-height: 1; }
+
+@keyframes gift-entrance {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+  80%  { transform: scale(0.92) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.gift-pop-enter-active { animation: gift-entrance 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.gift-pop-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.gift-pop-leave-to     { opacity: 0; transform: scale(0.8); }
+
+/* ── Gift popup ── */
+.gift-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 4, 8, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  backdrop-filter: blur(3px);
+  padding: 20px 16px;
+}
+
+.gift-card {
+  width: 100%;
+  max-width: 340px;
+  background: linear-gradient(160deg, #2c1018 0%, #1e0a14 100%);
+  border: 1.5px solid #c4973b;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(196,151,59,0.1);
+  position: relative;
+  animation: gift-card-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes gift-card-in {
+  0%   { transform: scale(0.8) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.gift-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  color: rgba(245, 230, 200, 0.6);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.gift-close:active { background: rgba(0,0,0,0.6); }
+
+.gift-image-wrap {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+}
+
+.gift-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gift-body {
+  padding: 16px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gift-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 22px;
+  color: #c4973b;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.gift-description {
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(245, 230, 200, 0.82);
+  line-height: 1.6;
+  letter-spacing: 0.2px;
+}
+
+.gift-overlay-fade-enter-active { transition: opacity 0.2s ease; }
+.gift-overlay-fade-leave-active { transition: opacity 0.18s ease; }
+.gift-overlay-fade-enter-from, .gift-overlay-fade-leave-to { opacity: 0; }
 
 /* ── Pack Overlay ── */
 .pack-overlay {
