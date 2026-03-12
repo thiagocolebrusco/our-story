@@ -1,7 +1,24 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { coverData } from '../data/album'
 
-defineEmits<{ (e: 'next'): void; (e: 'summary'): void }>()
+const emit = defineEmits<{ (e: 'next'): void; (e: 'summary'): void; (e: 'admin'): void }>()
+
+// Secret tap counter on the title — 5 taps within 3s opens admin
+const tapCount = ref(0)
+let tapTimer: ReturnType<typeof setTimeout> | null = null
+
+function onTitleTap(e: Event) {
+  e.stopPropagation()
+  tapCount.value++
+  if (tapTimer) clearTimeout(tapTimer)
+  if (tapCount.value >= 5) {
+    tapCount.value = 0
+    emit('admin')
+    return
+  }
+  tapTimer = setTimeout(() => { tapCount.value = 0 }, 3000)
+}
 </script>
 
 <template>
@@ -20,7 +37,7 @@ defineEmits<{ (e: 'next'): void; (e: 'summary'): void }>()
         <div class="content">
           <div class="names">{{ coverData.names }}</div>
 
-          <h1 class="title">{{ coverData.title }}</h1>
+          <h1 class="title" @click="onTitleTap">{{ coverData.title }}</h1>
 
           <div class="divider">
             <span class="line"></span>

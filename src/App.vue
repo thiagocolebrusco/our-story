@@ -21,6 +21,30 @@ const autoOpenYear = ref<number | null>(null)
 // Summary overlay
 const showSummary = ref(false)
 
+// Admin panel
+const showAdmin = ref(false)
+const adminConfirm = ref(false)
+
+function openAdmin() {
+  adminConfirm.value = false
+  showAdmin.value = true
+}
+function closeAdmin() {
+  showAdmin.value = false
+  adminConfirm.value = false
+}
+function resetAll() {
+  if (!adminConfirm.value) {
+    adminConfirm.value = true
+    return
+  }
+  unlockedYears.value = new Set()
+  localStorage.removeItem('unlockedYears')
+  currentPage.value = 0
+  autoOpenYear.value = null
+  closeAdmin()
+}
+
 // Photo lightbox
 const lightbox = ref<{ photos: Photo[], idx: number } | null>(null)
 
@@ -107,6 +131,7 @@ function onTouchEnd(e: TouchEvent) {
         key="cover"
         @next="goNext"
         @summary="openSummary"
+        @admin="openAdmin"
       />
 
       <!-- Year pages -->
@@ -146,6 +171,36 @@ function onTouchEnd(e: TouchEvent) {
         :start-index="lightbox.idx"
         @close="closeLightbox"
       />
+    </Transition>
+
+    <!-- Admin panel -->
+    <Transition name="admin-slide">
+      <div v-if="showAdmin" class="admin-overlay" @click.self="closeAdmin">
+        <div class="admin-panel">
+          <div class="admin-header">
+            <span class="admin-title">Admin</span>
+            <button class="admin-close" @click="closeAdmin">✕</button>
+          </div>
+
+          <div class="admin-body">
+            <Transition name="admin-confirm-fade" mode="out-in">
+              <div v-if="!adminConfirm" key="btn" class="admin-action">
+                <p class="admin-desc">Reinicia todo o progresso do álbum.</p>
+                <button class="admin-reset-btn" @click="resetAll">
+                  Resetar tudo
+                </button>
+              </div>
+              <div v-else key="confirm" class="admin-action">
+                <p class="admin-warn">Tem certeza? Todo o progresso será apagado.</p>
+                <div class="admin-confirm-row">
+                  <button class="admin-cancel-btn" @click="adminConfirm = false">Cancelar</button>
+                  <button class="admin-confirm-btn" @click="resetAll">Sim, resetar ✦</button>
+                </div>
+              </div>
+            </Transition>
+          </div>
+        </div>
+      </div>
     </Transition>
   </div>
 </template>
@@ -213,4 +268,147 @@ html, body {
 .lb-fade-enter-active { transition: opacity 0.2s ease; }
 .lb-fade-leave-active { transition: opacity 0.18s ease; }
 .lb-fade-enter-from, .lb-fade-leave-to { opacity: 0; }
+
+/* ── Admin panel ── */
+.admin-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 4, 8, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 400;
+  backdrop-filter: blur(2px);
+}
+
+.admin-panel {
+  width: 100%;
+  background: #1e0f18;
+  border-top: 1.5px solid rgba(196, 151, 59, 0.4);
+  border-radius: 18px 18px 0 0;
+  padding: 0 0 32px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(196, 151, 59, 0.15);
+}
+
+.admin-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(196, 151, 59, 0.6);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  color: rgba(245, 230, 200, 0.5);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-close:active { background: rgba(255,255,255,0.1); }
+
+.admin-body {
+  padding: 20px 20px 0;
+}
+
+.admin-action {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-desc {
+  font-family: 'Lato', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(245, 230, 200, 0.45);
+  letter-spacing: 0.3px;
+}
+
+.admin-warn {
+  font-family: 'Lato', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(220, 140, 120, 0.85);
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+}
+
+.admin-reset-btn {
+  width: 100%;
+  padding: 13px;
+  background: rgba(180, 50, 60, 0.2);
+  border: 1.5px solid rgba(180, 50, 60, 0.5);
+  border-radius: 12px;
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-style: italic;
+  color: rgba(240, 160, 150, 0.9);
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.admin-reset-btn:active { background: rgba(180, 50, 60, 0.35); }
+
+.admin-confirm-row {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-cancel-btn {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  color: rgba(245, 230, 200, 0.55);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-cancel-btn:active { background: rgba(255,255,255,0.1); }
+
+.admin-confirm-btn {
+  flex: 1.4;
+  padding: 12px;
+  background: rgba(180, 50, 60, 0.3);
+  border: 1.5px solid rgba(180, 50, 60, 0.6);
+  border-radius: 12px;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(240, 160, 150, 0.95);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.admin-confirm-btn:active { background: rgba(180, 50, 60, 0.5); }
+
+.admin-slide-enter-active { transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+.admin-slide-leave-active { transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.32, 0.72, 0, 1); }
+.admin-slide-enter-from  { opacity: 0; transform: translateY(100%); }
+.admin-slide-leave-to    { opacity: 0; transform: translateY(100%); }
+
+.admin-confirm-fade-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.admin-confirm-fade-leave-active { transition: opacity 0.1s ease; }
+.admin-confirm-fade-enter-from   { opacity: 0; transform: translateX(10px); }
+.admin-confirm-fade-leave-to     { opacity: 0; }
 </style>
