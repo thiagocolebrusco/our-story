@@ -189,17 +189,6 @@ async function openPack() {
       </template>
     </main>
 
-    <!-- Open Pack button (visible only when locked) -->
-    <Transition name="btn-fade">
-      <div v-if="!unlocked && !isOpening" class="open-pack-wrap">
-        <button class="open-pack-btn" @click="openPack">
-          <span class="btn-icon">✦</span>
-          <span class="btn-label">Abrir envelope</span>
-          <span class="btn-icon">✦</span>
-        </button>
-      </div>
-    </Transition>
-
     <!-- Navigation -->
     <footer class="page-footer">
       <button class="nav-btn prev" @click="$emit('prev')" :aria-label="'Página anterior'">‹</button>
@@ -421,76 +410,6 @@ async function openPack() {
 .layout-3 .row:first-child .polaroid { width: 157px; }
 .layout-3 .solo .polaroid { width: 172px; }
 .layout-4 .polaroid { width: 155px; }
-
-/* ── Open Pack button ── */
-.open-pack-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 6px 0 2px;
-  position: relative;
-  z-index: 2;
-}
-
-.open-pack-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 26px;
-  background: linear-gradient(135deg, #5c2235 0%, #7a2d3d 50%, #5c2235 100%);
-  border: 1.5px solid #c4973b;
-  border-radius: 30px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 3px 14px rgba(92, 34, 53, 0.45), inset 0 1px 0 rgba(255,255,255,0.1);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.open-pack-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.12) 50%,
-    transparent 65%
-  );
-  background-size: 200% 100%;
-  animation: btn-shimmer 2s infinite;
-}
-
-@keyframes btn-shimmer {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
-
-.open-pack-btn:active {
-  transform: scale(0.96);
-  box-shadow: 0 1px 8px rgba(92, 34, 53, 0.4);
-}
-
-.btn-icon {
-  font-size: 10px;
-  color: #c4973b;
-  opacity: 0.9;
-}
-
-.btn-label {
-  font-family: 'Playfair Display', serif;
-  font-size: 13px;
-  font-style: italic;
-  color: #f5e6c8;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-.btn-fade-enter-active { transition: opacity 0.3s, transform 0.3s; }
-.btn-fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.btn-fade-enter-from  { opacity: 0; transform: translateY(8px); }
-.btn-fade-leave-to    { opacity: 0; transform: translateY(8px); }
 
 /* Footer */
 .page-footer {
