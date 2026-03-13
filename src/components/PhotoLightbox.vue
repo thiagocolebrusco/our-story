@@ -13,7 +13,7 @@ const idx = ref(props.startIndex)
 const slideDir = ref<'left' | 'right'>('left')
 
 function getLargeUrl(id: string) {
-  return `https://picsum.photos/seed/${id}/800/680`
+  return `/photos/${id}.jpg`
 }
 
 function prev() {
