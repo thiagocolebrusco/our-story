@@ -13,14 +13,14 @@
     body {
       background: #fef9f0;
       font-family: 'Lato', sans-serif;
-      padding: 32px 24px;
+      padding: 20px 24px;
       color: #3d1f14;
     }
 
     /* ── Page header ── */
     .sheet-header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 16px;
     }
     .sheet-title {
       font-family: 'Dancing Script', cursive;
@@ -46,7 +46,7 @@
     /* ── Print button ── */
     .print-btn {
       display: block;
-      margin: 0 auto 32px;
+      margin: 0 auto 16px;
       padding: 10px 28px;
       background: linear-gradient(135deg, #5c2235, #7a2d3d);
       border: 1.5px solid #c4973b;
@@ -63,9 +63,9 @@
     /* ── Grid of pack cards ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      max-width: 680px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-width: 720px;
       margin: 0 auto;
     }
 
@@ -73,12 +73,12 @@
     .card {
       background: linear-gradient(160deg, #5c1a2a 0%, #3d0f1c 40%, #2a0a14 100%);
       border: 1.5px solid #c4973b;
-      border-radius: 10px;
-      padding: 14px 10px 12px;
+      border-radius: 8px;
+      padding: 10px 8px 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 5px;
       position: relative;
       break-inside: avoid;
       box-shadow: 0 4px 16px rgba(0,0,0,0.25);
@@ -112,14 +112,14 @@
     }
 
     .qr-wrap {
-      width: 110px;
-      height: 110px;
+      width: 90px;
+      height: 90px;
       background: #fffdf8;
-      border-radius: 6px;
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 6px;
+      padding: 5px;
     }
 
     .qr-wrap canvas,
@@ -156,10 +156,10 @@
 
     /* ── Print styles ── */
     @media print {
-      body { background: white; padding: 12px; }
+      body { background: white; padding: 8px 12px; }
       .print-btn { display: none; }
-      .sheet-header { margin-bottom: 20px; }
-      .grid { gap: 12px; }
+      .sheet-header { margin-bottom: 10px; }
+      .grid { gap: 8px; }
       .card { box-shadow: none; border-color: #c4973b; }
     }
   </style>
@@ -228,8 +228,8 @@
 
       new QRCode(document.getElementById(`qr-${token}`), {
         text: url,
-        width: 98,
-        height: 98,
+        width: 80,
+        height: 80,
         colorDark: '#2a0a14',
         colorLight: '#fffdf8',
         correctLevel: QRCode.CorrectLevel.M,
