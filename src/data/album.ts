@@ -58,8 +58,64 @@ export const tokenToYear: Record<string, number> = {}
 // A year is "complete" once all its photos are individually unlocked.
 // Gifts trigger on year completion regardless of which mode is active.
 //
-// To add/change pack contents, edit the `packs` array below.
-// Each photo ID must appear in exactly one pack.
+// ── HOW TO EDIT PACKS ────────────────────────────────────────────────────────
+// Photos are numbered 1–49 in album order (year by year, left to right):
+//
+//  #  photo     year   caption (first words)
+//  1  2009-1    2009   O dia em que tudo mudou
+//  2  2009-2    2009   Nossa primeira aventura
+//  3  2009-3    2009   Já inseparáveis
+//  4  2010-1    2010   Aprendendo a nos amar
+//  5  2010-2    2010   Perfeitamente imperfeitos
+//  6  2011-1    2011   Criando recordações
+//  7  2011-2    2011   O nosso mundinho
+//  8  2011-3    2011   Rindo até doer
+//  9  2012-1    2012   Lar é onde você está
+// 10  2012-2    2012   Nós dois contra o mundo
+// 11  2013-1    2013   Tantas primeiras vezes
+// 12  2013-2    2013   Minha melhor companhia de viagem
+// 13  2013-3    2013   Manhãs de domingo
+// 14  2013-4    2013   Nunca um momento entediante
+// 15  2014-1    2014   Evoluindo lado a lado
+// 16  2014-2    2014   Para onde vamos agora?
+// 17  2014-3    2014   Felizes no nosso caos
+// 18  2015-1    2015   Simples e lindo assim
+// 19  2015-2    2015   Só preciso de você
+// 20  2016-1    2016   Ombro a ombro
+// 21  2016-2    2016   Melhor juntos
+// 22  2016-3    2016   Nossa diversão
+// 23  2017-1    2017   Não consigo imaginar diferente
+// 24  2017-2    2017   Meu humano favorito
+// 25  2017-3    2017   As coisas boas da vida
+// 26  2017-4    2017   E eu escolheria de novo
+// 27  2018-1    2018   Nós dois e o mundo
+// 28  2018-2    2018   Exatamente onde quero estar
+// 29  2019-1    2019   Uma última aventura
+// 30  2019-2    2019   Dias que guardarei para sempre
+// 31  2019-3    2019   Momentos dourados
+// 32  2020-1    2020   Juntos por tudo
+// 33  2020-2    2020   Encontrando alegria em casa
+// 34  2021-1    2021   Um novo começo
+// 35  2021-2    2021   Escolhendo você, sempre
+// 36  2021-3    2021   De volta ao que importa
+// 37  2022-1    2022   Novos começos
+// 38  2022-2    2022   Ainda meu sorriso favorito
+// 39  2022-3    2022   Muito mais por vir
+// 40  2022-4    2022   Construindo algo bonito
+// 41  2023-1    2023   Mais fortes a cada ano
+// 42  2023-2    2023   O melhor ainda está por vir
+// 43  2023-3    2023   Ainda rindo
+// 44  2024-1    2024   Mais uma volta ao sol
+// 45  2024-2    2024   Você faz tudo melhor
+// 46  2025-1    2025   17 anos ♡
+// 47  2025-2    2025   E eu escolheria de novo
+// 48  2025-3    2025   Nossa história continua
+// 49  2025-4    2025   Para sempre seus
+//
+// Edit the `indices` arrays below to reassign photos to packs.
+// Each number must appear in exactly one pack (all 49 must be covered).
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface PackPhoto {
   year: number
   photoId: string
@@ -71,29 +127,26 @@ export interface Pack {
   photos: PackPhoto[]
 }
 
-export const packs: Pack[] = [
-  { id: 'pack-1',  token: 'a2kp7nmx', photos: [{ year: 2009, photoId: '2009-1' }, { year: 2015, photoId: '2015-1' }, { year: 2022, photoId: '2022-1' }] },
-  { id: 'pack-2',  token: 'b8vr3qhc', photos: [{ year: 2009, photoId: '2009-2' }, { year: 2016, photoId: '2016-1' }, { year: 2023, photoId: '2023-1' }] },
-  { id: 'pack-3',  token: 'c5tz9wjd', photos: [{ year: 2009, photoId: '2009-3' }, { year: 2017, photoId: '2017-1' }, { year: 2024, photoId: '2024-1' }] },
-  { id: 'pack-4',  token: 'd7mx4bkr', photos: [{ year: 2010, photoId: '2010-1' }, { year: 2013, photoId: '2013-1' }, { year: 2021, photoId: '2021-1' }] },
-  { id: 'pack-5',  token: 'e3nf8ypq', photos: [{ year: 2010, photoId: '2010-2' }, { year: 2014, photoId: '2014-1' }, { year: 2025, photoId: '2025-1' }] },
-  { id: 'pack-6',  token: 'f9cs2vwt', photos: [{ year: 2011, photoId: '2011-1' }, { year: 2018, photoId: '2018-1' }, { year: 2022, photoId: '2022-2' }] },
-  { id: 'pack-7',  token: 'g4hb7znk', photos: [{ year: 2011, photoId: '2011-2' }, { year: 2019, photoId: '2019-1' }, { year: 2023, photoId: '2023-2' }] },
-  { id: 'pack-8',  token: 'h6qr5mcj', photos: [{ year: 2011, photoId: '2011-3' }, { year: 2020, photoId: '2020-1' }, { year: 2025, photoId: '2025-2' }] },
-  { id: 'pack-9',  token: 'i2wp9tfx', photos: [{ year: 2012, photoId: '2012-1' }, { year: 2013, photoId: '2013-2' }, { year: 2017, photoId: '2017-2' }] },
-  { id: 'pack-10', token: 'j8nd3kcv', photos: [{ year: 2012, photoId: '2012-2' }, { year: 2016, photoId: '2016-2' }, { year: 2021, photoId: '2021-2' }] },
-  { id: 'pack-11', token: 'k5fv6rxb', photos: [{ year: 2013, photoId: '2013-3' }, { year: 2019, photoId: '2019-2' }, { year: 2024, photoId: '2024-2' }] },
-  { id: 'pack-12', token: 'l7th2qnm', photos: [{ year: 2013, photoId: '2013-4' }, { year: 2015, photoId: '2015-2' }, { year: 2022, photoId: '2022-3' }] },
-  { id: 'pack-13', token: 'm4jx8bpw', photos: [{ year: 2014, photoId: '2014-2' }, { year: 2018, photoId: '2018-2' }, { year: 2023, photoId: '2023-3' }] },
-  { id: 'pack-14', token: 'n9kc3fzr', photos: [{ year: 2014, photoId: '2014-3' }, { year: 2020, photoId: '2020-2' }, { year: 2025, photoId: '2025-3' }] },
-  { id: 'pack-15', token: 'o6mb5ytj', photos: [{ year: 2016, photoId: '2016-3' }, { year: 2021, photoId: '2021-3' }, { year: 2022, photoId: '2022-4' }] },
-  { id: 'pack-16', token: 'p3qn7hxc', photos: [{ year: 2017, photoId: '2017-3' }, { year: 2019, photoId: '2019-3' }] },
-  { id: 'pack-17', token: 'q8rz4vdk', photos: [{ year: 2017, photoId: '2017-4' }, { year: 2025, photoId: '2025-4' }] },
+// Pack definitions — edit `indices` to control which photos each pack unlocks
+const packDefinitions: { id: string; token: string; indices: number[] }[] = [
+  { id: 'pack-1',  token: 'a2kp7nmx', indices: [ 1, 18, 37] },
+  { id: 'pack-2',  token: 'b8vr3qhc', indices: [ 2, 20, 41] },
+  { id: 'pack-3',  token: 'c5tz9wjd', indices: [ 3, 23, 44] },
+  { id: 'pack-4',  token: 'd7mx4bkr', indices: [ 4, 11, 34] },
+  { id: 'pack-5',  token: 'e3nf8ypq', indices: [ 5, 15, 46] },
+  { id: 'pack-6',  token: 'f9cs2vwt', indices: [ 6, 27, 38] },
+  { id: 'pack-7',  token: 'g4hb7znk', indices: [ 7, 29, 42] },
+  { id: 'pack-8',  token: 'h6qr5mcj', indices: [ 8, 32, 47] },
+  { id: 'pack-9',  token: 'i2wp9tfx', indices: [ 9, 12, 24] },
+  { id: 'pack-10', token: 'j8nd3kcv', indices: [10, 21, 35] },
+  { id: 'pack-11', token: 'k5fv6rxb', indices: [13, 30, 45] },
+  { id: 'pack-12', token: 'l7th2qnm', indices: [14, 19, 39] },
+  { id: 'pack-13', token: 'm4jx8bpw', indices: [16, 28, 43] },
+  { id: 'pack-14', token: 'n9kc3fzr', indices: [17, 33, 48] },
+  { id: 'pack-15', token: 'o6mb5ytj', indices: [22, 36, 40] },
+  { id: 'pack-16', token: 'p3qn7hxc', indices: [25, 31] },
+  { id: 'pack-17', token: 'q8rz4vdk', indices: [26, 49] },
 ]
-
-// Maps opaque token → pack (pack mode)
-export const tokenToPack: Record<string, Pack> = {}
-packs.forEach(p => { tokenToPack[p.token] = p })
 
 export const coverData = {
   title: 'Our Story',
@@ -321,3 +374,19 @@ export const pages: YearPage[] = [
 
 // Build token → year lookup from the pages array
 pages.forEach(p => { tokenToYear[p.token] = p.year })
+
+// ── Build packs from index-based definitions ──────────────────────────────
+// Flat list of every photo in album order (index 1 = first photo of 2009)
+const allPhotos: PackPhoto[] = pages.flatMap(p =>
+  p.photos.map(ph => ({ year: p.year, photoId: ph.id }))
+)
+
+export const packs: Pack[] = packDefinitions.map(def => ({
+  id: def.id,
+  token: def.token,
+  photos: def.indices.map(i => allPhotos[i - 1]!),
+}))
+
+// Maps opaque token → pack (pack mode)
+export const tokenToPack: Record<string, Pack> = {}
+packs.forEach(p => { tokenToPack[p.token] = p })
