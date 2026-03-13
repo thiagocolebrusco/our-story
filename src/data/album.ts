@@ -112,10 +112,35 @@ export const tokenToYear: Record<string, number> = {}
 // 48  2025-3    2025   Nossa história continua
 // 49  2025-4    2025   Para sempre seus
 //
-// Edit the `indices` arrays below to reassign photos to packs.
-// Each number must appear in exactly one pack (all 49 must be covered).
-// ─────────────────────────────────────────────────────────────────────────────
+// ── TOKENS (QR codes) ─────────────────────────────────────────────────────────
+// These are the opaque strings encoded in the QR codes you hide around the house.
+// Tokens are NOT linked to specific packs — the 1st token scanned always opens
+// pack 1, the 2nd token opens pack 2, etc., regardless of which token it is.
+// Add/remove tokens freely; the count just needs to match the number of packs.
+export const packTokens: ReadonlySet<string> = new Set([
+  'a2kp7nmx',
+  'b8vr3qhc',
+  'c5tz9wjd',
+  'd7mx4bkr',
+  'e3nf8ypq',
+  'f9cs2vwt',
+  'g4hb7znk',
+  'h6qr5mcj',
+  'i2wp9tfx',
+  'j8nd3kcv',
+  'k5fv6rxb',
+  'l7th2qnm',
+  'm4jx8bpw',
+  'n9kc3fzr',
+  'o6mb5ytj',
+  'p3qn7hxc',
+  'q8rz4vdk',
+])
 
+// ── PACKS (content queue) ─────────────────────────────────────────────────────
+// Packs unlock in order: pack 1 first, pack 2 second, etc.
+// Edit `indices` to control which photos each pack reveals.
+// Each number must appear in exactly one pack (all 49 must be covered).
 export interface PackPhoto {
   year: number
   photoId: string
@@ -123,29 +148,27 @@ export interface PackPhoto {
 
 export interface Pack {
   id: string
-  token: string   // opaque unlock token used in QR codes
   photos: PackPhoto[]
 }
 
-// Pack definitions — edit `indices` to control which photos each pack unlocks
-const packDefinitions: { id: string; token: string; indices: number[] }[] = [
-  { id: 'pack-1',  token: 'a2kp7nmx', indices: [ 1, 18, 37] },
-  { id: 'pack-2',  token: 'b8vr3qhc', indices: [ 2, 20, 41] },
-  { id: 'pack-3',  token: 'c5tz9wjd', indices: [ 3, 23, 44] },
-  { id: 'pack-4',  token: 'd7mx4bkr', indices: [ 4, 11, 34] },
-  { id: 'pack-5',  token: 'e3nf8ypq', indices: [ 5, 15, 46] },
-  { id: 'pack-6',  token: 'f9cs2vwt', indices: [ 6, 27, 38] },
-  { id: 'pack-7',  token: 'g4hb7znk', indices: [ 7, 29, 42] },
-  { id: 'pack-8',  token: 'h6qr5mcj', indices: [ 8, 32, 47] },
-  { id: 'pack-9',  token: 'i2wp9tfx', indices: [ 9, 12, 24] },
-  { id: 'pack-10', token: 'j8nd3kcv', indices: [10, 21, 35] },
-  { id: 'pack-11', token: 'k5fv6rxb', indices: [13, 30, 45] },
-  { id: 'pack-12', token: 'l7th2qnm', indices: [14, 19, 39] },
-  { id: 'pack-13', token: 'm4jx8bpw', indices: [16, 28, 43] },
-  { id: 'pack-14', token: 'n9kc3fzr', indices: [17, 33, 48] },
-  { id: 'pack-15', token: 'o6mb5ytj', indices: [22, 36, 40] },
-  { id: 'pack-16', token: 'p3qn7hxc', indices: [25, 31] },
-  { id: 'pack-17', token: 'q8rz4vdk', indices: [26, 49] },
+const packDefinitions: { id: string; indices: number[] }[] = [
+  { id: 'pack-1',  indices: [ 1, 18, 37] },
+  { id: 'pack-2',  indices: [ 2, 20, 41] },
+  { id: 'pack-3',  indices: [ 3, 23, 44] },
+  { id: 'pack-4',  indices: [ 4, 11, 34] },
+  { id: 'pack-5',  indices: [ 5, 15, 46] },
+  { id: 'pack-6',  indices: [ 6, 27, 38] },
+  { id: 'pack-7',  indices: [ 7, 29, 42] },
+  { id: 'pack-8',  indices: [ 8, 32, 47] },
+  { id: 'pack-9',  indices: [ 9, 12, 24] },
+  { id: 'pack-10', indices: [10, 21, 35] },
+  { id: 'pack-11', indices: [13, 30, 45] },
+  { id: 'pack-12', indices: [14, 19, 39] },
+  { id: 'pack-13', indices: [16, 28, 43] },
+  { id: 'pack-14', indices: [17, 33, 48] },
+  { id: 'pack-15', indices: [22, 36, 40] },
+  { id: 'pack-16', indices: [25, 31] },
+  { id: 'pack-17', indices: [26, 49] },
 ]
 
 export const coverData = {
@@ -381,14 +404,8 @@ const allPhotos: PackPhoto[] = pages.flatMap(p =>
   p.photos.map(ph => ({ year: p.year, photoId: ph.id }))
 )
 
-// Indices are always sorted ascending so photos reveal in global story order,
-// regardless of which pack is found first or how indices are listed above.
+// Photos always reveal in ascending story order regardless of how indices are listed.
 export const packs: Pack[] = packDefinitions.map(def => ({
   id: def.id,
-  token: def.token,
   photos: [...def.indices].sort((a, b) => a - b).map(i => allPhotos[i - 1]!),
 }))
-
-// Maps opaque token → pack (pack mode)
-export const tokenToPack: Record<string, Pack> = {}
-packs.forEach(p => { tokenToPack[p.token] = p })

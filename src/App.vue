@@ -7,7 +7,7 @@ import PhotoLightbox from './components/PhotoLightbox.vue'
 import PackRevealOverlay from './components/PackRevealOverlay.vue'
 import type { RevealItem } from './components/PackRevealOverlay.vue'
 import LandingPage from './components/LandingPage.vue'
-import { pages, tokenToYear, tokenToPack } from './data/album'
+import { pages, tokenToYear, packTokens, packs } from './data/album'
 import type { Photo } from './data/album'
 
 // 0 = cover, 1–17 = year pages
@@ -28,6 +28,11 @@ const unlockedYears = ref<Set<number>>(new Set(stored))
 // ── Pack mode state ──────────────────────────────────────────────────────────
 const storedPhotos = JSON.parse(localStorage.getItem('unlockedPhotos') || '[]') as string[]
 const unlockedPhotos = ref<Set<string>>(new Set(storedPhotos))
+
+// Ordered list of tokens already used — its length tells us which pack to open next
+const usedTokens = ref<string[]>(
+  JSON.parse(localStorage.getItem('usedTokens') || '[]') as string[]
+)
 
 // Year to auto-open pack for (set via hash, year mode only)
 const autoOpenYear = ref<number | null>(null)
@@ -90,6 +95,8 @@ function resetAll() {
   localStorage.removeItem('unlockedYears')
   unlockedPhotos.value = new Set()
   localStorage.removeItem('unlockedPhotos')
+  usedTokens.value = []
+  localStorage.removeItem('usedTokens')
   currentPage.value = 0
   autoOpenYear.value = null
   packRevealData.value = null
@@ -141,7 +148,6 @@ onMounted(() => {
 
     // Auto-detect token type — works regardless of current albumMode setting
     const year = tokenToYear[token]
-    const pack = tokenToPack[token]
 
     if (year !== undefined) {
       // Year token → year mode flow
@@ -152,35 +158,39 @@ onMounted(() => {
         currentPage.value = pageIdx + 1
         autoOpenYear.value = year
       }
-    } else if (pack) {
-      // Pack token → pack reveal overlay (auto-switch to pack mode)
+    } else if (packTokens.has(token)) {
+      // Pack token → queue-based reveal (auto-switch to pack mode)
       albumMode.value = 'pack'
-      const newPhotoIds = pack.photos
-        .map(ph => ph.photoId)
-        .filter(id => !unlockedPhotos.value.has(id))
 
-      if (newPhotoIds.length > 0) {
-        // Persist new photos
-        unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
-        localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
+      // Only proceed if this token hasn't been used yet
+      if (!usedTokens.value.includes(token)) {
+        const packIndex = usedTokens.value.length   // 0-based: next pack in queue
+        const pack = packs[packIndex]
 
-        // Build reveal items (include ALL pack photos, not just new ones)
-        const items: RevealItem[] = pack.photos.map(ph => {
-          const yearPage = pages.find(p => p.year === ph.year)!
-          const photo = yearPage.photos.find(p => p.id === ph.photoId)!
-          return {
-            year: ph.year,
-            yearTitle: yearPage.title,
-            photoId: ph.photoId,
-            caption: photo.caption,
-          }
-        })
+        if (pack) {
+          // Record this token as used
+          usedTokens.value = [...usedTokens.value, token]
+          localStorage.setItem('usedTokens', JSON.stringify(usedTokens.value))
 
-        // First year with a newly unlocked photo
-        const firstEntry = pack.photos.find(ph => newPhotoIds.includes(ph.photoId))!
+          // Persist newly unlocked photos
+          const newPhotoIds = pack.photos.map(ph => ph.photoId)
+          unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
+          localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
 
-        // Show the reveal overlay instead of navigating directly
-        packRevealData.value = { items, firstYear: firstEntry.year }
+          // Build reveal items for the overlay
+          const items: RevealItem[] = pack.photos.map(ph => {
+            const yearPage = pages.find(p => p.year === ph.year)!
+            const photo = yearPage.photos.find(p => p.id === ph.photoId)!
+            return {
+              year: ph.year,
+              yearTitle: yearPage.title,
+              photoId: ph.photoId,
+              caption: photo.caption,
+            }
+          })
+
+          packRevealData.value = { items, firstYear: pack.photos[0]!.year }
+        }
       }
     }
 
