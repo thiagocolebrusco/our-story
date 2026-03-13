@@ -24,8 +24,8 @@ const burstActive  = ref(false)
 const revealedCount = ref(0)
 const showButton   = ref(false)
 
-// Fixed rotations for up to 5 photo cards
-const ROTATIONS = [-7, 3, -4, 6, -2]
+// Fixed rotations for up to 7 photo cards
+const ROTATIONS = [-7, 3, -4, 6, -2, 5, -3]
 
 function sleep(ms: number) { return new Promise<void>(r => setTimeout(r, ms)) }
 
@@ -357,10 +357,12 @@ onMounted(runAnimation)
 .photos-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: center;
   gap: 10px;
   padding: 0 8px;
+  max-width: 370px;
 }
 
 /* Individual photo card (polaroid style) */
@@ -373,13 +375,13 @@ onMounted(runAnimation)
   padding: 8px 8px 10px;
   box-shadow: 4px 6px 20px rgba(0, 0, 0, 0.55);
   transform: rotate(var(--rot));
-  width: 118px;
+  width: 108px;
   flex-shrink: 0;
 }
 
 .photo-img-area {
-  width: 102px;
-  height: 120px;
+  width: 92px;
+  height: 108px;
   background: linear-gradient(135deg, #4a2030 0%, #2a0f1c 50%, #1a081a 100%);
   border-radius: 1px;
   margin-bottom: 8px;

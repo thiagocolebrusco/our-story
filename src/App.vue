@@ -86,6 +86,17 @@ function closeAdmin() {
   showAdmin.value = false
   adminConfirm.value = false
 }
+function openAllPacks() {
+  // Silently unlock every photo from every pack
+  const allPhotoIds = packs.flatMap(p => p.photos.map(ph => ph.photoId))
+  unlockedPhotos.value = new Set([...unlockedPhotos.value, ...allPhotoIds])
+  localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
+  // Mark all tokens as used so the queue shows complete
+  usedTokens.value = [...packTokens]
+  localStorage.setItem('usedTokens', JSON.stringify(usedTokens.value))
+  closeAdmin()
+}
+
 function resetAll() {
   if (!adminConfirm.value) {
     adminConfirm.value = true
@@ -325,6 +336,16 @@ function onTouchEnd(e: TouchEvent) {
 
             <div class="admin-divider"></div>
 
+            <!-- Open all packs shortcut -->
+            <div class="admin-section">
+              <p class="admin-desc">Abre todos os {{ packs.length }} pacotes de uma vez (para testes).</p>
+              <button class="admin-open-all-btn" @click="openAllPacks">
+                Abrir todos os pacotes ✦
+              </button>
+            </div>
+
+            <div class="admin-divider"></div>
+
             <Transition name="admin-confirm-fade" mode="out-in">
               <div v-if="!adminConfirm" key="btn" class="admin-action">
                 <p class="admin-desc">Reinicia todo o progresso do álbum.</p>
@@ -541,6 +562,23 @@ html, body {
   letter-spacing: 0.3px;
   line-height: 1.5;
 }
+
+.admin-open-all-btn {
+  width: 100%;
+  padding: 13px;
+  background: rgba(196, 151, 59, 0.12);
+  border: 1.5px solid rgba(196, 151, 59, 0.4);
+  border-radius: 12px;
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-style: italic;
+  color: rgba(196, 151, 59, 0.9);
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.admin-open-all-btn:active { background: rgba(196, 151, 59, 0.25); }
 
 .admin-reset-btn {
   width: 100%;
