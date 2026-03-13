@@ -381,10 +381,12 @@ const allPhotos: PackPhoto[] = pages.flatMap(p =>
   p.photos.map(ph => ({ year: p.year, photoId: ph.id }))
 )
 
+// Indices are always sorted ascending so photos reveal in global story order,
+// regardless of which pack is found first or how indices are listed above.
 export const packs: Pack[] = packDefinitions.map(def => ({
   id: def.id,
   token: def.token,
-  photos: def.indices.map(i => allPhotos[i - 1]!),
+  photos: [...def.indices].sort((a, b) => a - b).map(i => allPhotos[i - 1]!),
 }))
 
 // Maps opaque token → pack (pack mode)
