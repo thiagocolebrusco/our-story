@@ -186,31 +186,31 @@ export const packTokens: ReadonlySet<string> = new Set([
 // Edit `indices` to control which photos each pack reveals.
 // Each number must appear in exactly one pack (all 108 must be covered).
 //
-// Year completion schedule (non-chronological, packs 1–2 complete nothing):
+// Year completion schedule (non-chronological, gaps spread across 3–10):
 //   pack-1  → no completion  (intro: 2009, 2010, 2011, 2012, 2015)
 //   pack-2  → no completion  (intro: 2014, 2016, 2017, 2018, 2019)
-//   pack-3  → completes 2021
-//   pack-4  → completes 2015
-//   pack-5  → completes 2023
-//   pack-6  → completes 2011
-//   pack-7  → completes 2024
-//   pack-8  → completes 2014
-//   pack-9  → completes 2013
-//   pack-10 → completes 2020
-//   pack-11 → no completion
-//   pack-12 → completes 2016
-//   pack-13 → completes 2009
-//   pack-14 → no completion
-//   pack-15 → completes 2022
-//   pack-16 → completes 2010
-//   pack-17 → no completion
-//   pack-18 → completes 2012
+//   pack-3  → no completion
+//   pack-4  → completes 2021
+//   pack-5  → no completion
+//   pack-6  → completes 2015
+//   pack-7  → completes 2023
+//   pack-8  → no completion
+//   pack-9  → completes 2011
+//   pack-10 → completes 2024
+//   pack-11 → completes 2014
+//   pack-12 → completes 2013
+//   pack-13 → completes 2020
+//   pack-14 → completes 2016
+//   pack-15 → completes 2009
+//   pack-16 → no completion
+//   pack-17 → completes 2022
+//   pack-18 → completes 2010
 //   pack-19 → no completion
-//   pack-20 → completes 2017
-//   pack-21 → completes 2018
-//   pack-22 → no completion
-//   pack-23 → completes 2019
-//   pack-24 → no completion
+//   pack-20 → completes 2012
+//   pack-21 → no completion
+//   pack-22 → completes 2017
+//   pack-23 → completes 2018
+//   pack-24 → completes 2019
 //   pack-25 → completes 2025
 export interface PackPhoto {
   year: number
@@ -225,28 +225,28 @@ export interface Pack {
 const packDefinitions: { id: string; indices: number[] }[] = [
   { id: 'pack-1',  indices: [  1,   7,  16,  20,  39] },
   { id: 'pack-2',  indices: [ 34,  43,  48,  56,  65] },
-  { id: 'pack-3',  indices: [ 78,  84,  85,  86] },        // completes 2021
-  { id: 'pack-4',  indices: [ 40,  41,  42,  87] },        // completes 2015
-  { id: 'pack-5',  indices: [ 94,  95,  96,  97] },        // completes 2023
-  { id: 'pack-6',  indices: [ 17,  18,  19,  29] },        // completes 2011
-  { id: 'pack-7',  indices: [ 98,  99, 100, 101] },        // completes 2024
-  { id: 'pack-8',  indices: [ 35,  36,  37,  38] },        // completes 2014
-  { id: 'pack-9',  indices: [ 30,  31,  32,  33] },        // completes 2013
-  { id: 'pack-10', indices: [ 80,  81,  82,  83] },        // completes 2020
-  { id: 'pack-11', indices: [  2,   8,  10,  21] },
-  { id: 'pack-12', indices: [ 44,  45,  46,  47] },        // completes 2016
-  { id: 'pack-13', indices: [  3,   4,   5,   6] },        // completes 2009
-  { id: 'pack-14', indices: [  9,  11,  22,  49,  60] },
-  { id: 'pack-15', indices: [ 66,  67,  91,  92,  93] },   // completes 2022
-  { id: 'pack-16', indices: [ 12,  13,  14,  15,  68] },   // completes 2010
-  { id: 'pack-17', indices: [ 23,  50,  61,  69] },
-  { id: 'pack-18', indices: [ 24,  25,  26,  27,  28] },   // completes 2012
-  { id: 'pack-19', indices: [ 51,  62,  70, 102] },
-  { id: 'pack-20', indices: [ 52,  53,  54,  55,  71] },   // completes 2017
-  { id: 'pack-21', indices: [ 63,  64,  72,  73, 103] },   // completes 2018
-  { id: 'pack-22', indices: [ 57,  74, 104, 105] },
-  { id: 'pack-23', indices: [ 75,  76,  77, 106] },        // completes 2019
-  { id: 'pack-24', indices: [ 58,  79,  88, 107] },
+  { id: 'pack-3',  indices: [  2,   8,  10,  21] },
+  { id: 'pack-4',  indices: [ 78,  84,  85,  86] },        // completes 2021
+  { id: 'pack-5',  indices: [  9,  11,  22,  49,  60] },
+  { id: 'pack-6',  indices: [ 40,  41,  42,  87] },        // completes 2015
+  { id: 'pack-7',  indices: [ 94,  95,  96,  97] },        // completes 2023
+  { id: 'pack-8',  indices: [ 23,  50,  61,  69] },
+  { id: 'pack-9',  indices: [ 17,  18,  19,  29] },        // completes 2011
+  { id: 'pack-10', indices: [ 98,  99, 100, 101] },        // completes 2024
+  { id: 'pack-11', indices: [ 35,  36,  37,  38] },        // completes 2014
+  { id: 'pack-12', indices: [ 30,  31,  32,  33] },        // completes 2013
+  { id: 'pack-13', indices: [ 80,  81,  82,  83] },        // completes 2020
+  { id: 'pack-14', indices: [ 44,  45,  46,  47] },        // completes 2016
+  { id: 'pack-15', indices: [  3,   4,   5,   6] },        // completes 2009
+  { id: 'pack-16', indices: [ 57,  74, 104, 105] },
+  { id: 'pack-17', indices: [ 66,  67,  91,  92,  93] },   // completes 2022
+  { id: 'pack-18', indices: [ 12,  13,  14,  15,  68] },   // completes 2010
+  { id: 'pack-19', indices: [ 58,  79,  88, 107] },
+  { id: 'pack-20', indices: [ 24,  25,  26,  27,  28] },   // completes 2012
+  { id: 'pack-21', indices: [ 51,  62,  70, 102] },
+  { id: 'pack-22', indices: [ 52,  53,  54,  55,  71] },   // completes 2017
+  { id: 'pack-23', indices: [ 63,  64,  72,  73, 103] },   // completes 2018
+  { id: 'pack-24', indices: [ 75,  76,  77, 106] },        // completes 2019
   { id: 'pack-25', indices: [ 59,  89,  90, 108] },        // completes 2025
 ]
 
