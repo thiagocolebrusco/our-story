@@ -7,6 +7,7 @@ import PhotoLightbox from './components/PhotoLightbox.vue'
 import PackRevealOverlay from './components/PackRevealOverlay.vue'
 import type { RevealItem } from './components/PackRevealOverlay.vue'
 import LandingPage from './components/LandingPage.vue'
+import EpiloguePage from './components/EpiloguePage.vue'
 import { pages, tokenToYear, packTokens, packs } from './data/album'
 import type { Photo } from './data/album'
 
@@ -62,6 +63,15 @@ const effectiveUnlockedYears = computed<Set<number>>(() => {
   if (albumMode.value === 'year') return unlockedYears.value
   return new Set(pages.filter(p => isYearComplete(p.year)).map(p => p.year))
 })
+
+// Album complete — unlocks epilogue page
+const isAlbumComplete = computed(() => {
+  if (albumMode.value === 'pack') return usedTokens.value.length >= packs.length
+  return pages.every(p => unlockedYears.value.has(p.year))
+})
+
+// Total pages including epilogue when complete
+const totalPages = computed(() => pages.length + (isAlbumComplete.value ? 1 : 0))
 
 // Landing page (shown once on first visit)
 const showLanding = ref(localStorage.getItem('hasSeenLanding') !== 'true')
@@ -214,7 +224,7 @@ onMounted(() => {
 })
 
 function goNext() {
-  if (currentPage.value < pages.length) {
+  if (currentPage.value < totalPages.value) {
     direction.value = 'left'
     currentPage.value++
   }
@@ -255,13 +265,21 @@ function onTouchEnd(e: TouchEvent) {
         @admin="openAdmin"
       />
 
+      <!-- Epilogue (only when album is complete) -->
+      <EpiloguePage
+        v-else-if="isAlbumComplete && currentPage === pages.length + 1"
+        key="epilogue"
+        @prev="goPrev"
+        @summary="openSummary"
+      />
+
       <!-- Year pages -->
       <YearPage
         v-else
         :key="currentPage"
         :page="pages[currentPage - 1]!"
         :pageIndex="currentPage"
-        :total="pages.length"
+        :total="totalPages"
         :unlocked="isYearComplete(pages[currentPage - 1]!.year)"
         :pre-revealed="currentPreRevealed"
         :album-mode="albumMode"
