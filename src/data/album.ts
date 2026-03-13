@@ -285,6 +285,11 @@ export const pages: YearPage[] = [
     title: 'Descobrindo um ao outro',
     bgTone: 'blush',
     decoration: 'none',
+    gift: {
+      title: 'Um presente especial ♡',
+      image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&q=80',
+      description: 'Um presente físico guardado com muito amor para você — é só resgatar ♡',
+    },
     photos: [
       { id: '2010-1', caption: 'Aprendendo a nos amar',               rotation: -2.5, size: 'normal' },
       { id: '2010-2', caption: 'Perfeitamente imperfeitos',            rotation:  3.5, size: 'normal' },
@@ -334,6 +339,11 @@ export const pages: YearPage[] = [
     title: 'Um ano inesquecível',
     bgTone: 'cream',
     decoration: 'flowers',
+    gift: {
+      title: 'Jantar especial ♡',
+      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
+      description: 'Um jantar em um restaurante à sua escolha — só uma regra: não pode ser um que já frequentamos. Pode ser só nós dois, ou podemos levar as crianças também ♡',
+    },
     photos: [
       { id: '2013-1', caption: 'Tantas primeiras vezes',               rotation: -3,   size: 'normal' },
       { id: '2013-2', caption: 'Minha melhor companhia de viagem',     rotation:  1,   size: 'normal' },
@@ -406,6 +416,11 @@ export const pages: YearPage[] = [
     title: 'Só nós dois',
     bgTone: 'blush',
     decoration: 'none',
+    gift: {
+      title: 'Massagem especial ♡',
+      image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80',
+      description: '40 minutos de massagem do seu marido, com muito amor — use quando e onde quiser ♡',
+    },
     photos: [
       { id: '2018-1', caption: 'Nós dois e o mundo',                   rotation:  3.5, size: 'normal' },
       { id: '2018-2', caption: 'Exatamente onde quero estar',          rotation: -1,   size: 'normal' },
@@ -489,6 +504,11 @@ export const pages: YearPage[] = [
     title: 'Mais fortes',
     bgTone: 'cream',
     decoration: 'hearts',
+    gift: {
+      title: 'Café da manhã ♡',
+      image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&q=80',
+      description: 'Café da manhã no lugar de sua preferência — pode ser hoje ou qualquer outro dia que você escolher ♡',
+    },
     photos: [
       { id: '2023-1', caption: 'Mais fortes a cada ano',               rotation:  2,   size: 'normal' },
       { id: '2023-2', caption: 'O melhor ainda está por vir',          rotation: -3.5, size: 'normal' },
