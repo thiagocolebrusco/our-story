@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AlbumCover from './components/AlbumCover.vue'
 import YearPage from './components/YearPage.vue'
 import AlbumSummary from './components/AlbumSummary.vue'
@@ -8,23 +8,12 @@ import PackRevealOverlay from './components/PackRevealOverlay.vue'
 import type { RevealItem } from './components/PackRevealOverlay.vue'
 import LandingPage from './components/LandingPage.vue'
 import EpiloguePage from './components/EpiloguePage.vue'
-import { pages, tokenToYear, packTokens, packs } from './data/album'
+import { pages, packTokens, packs } from './data/album'
 import type { Photo } from './data/album'
 
-// 0 = cover, 1–17 = year pages
+// 0 = cover, 1–N = year pages, N+1 = epilogue (when complete)
 const currentPage = ref(0)
 const direction = ref<'left' | 'right'>('left')
-
-// ── Album mode ───────────────────────────────────────────────────────────────
-type AlbumMode = 'year' | 'pack'
-const albumMode = ref<AlbumMode>(
-  (localStorage.getItem('albumMode') as AlbumMode | null) ?? 'pack'
-)
-watch(albumMode, val => localStorage.setItem('albumMode', val))
-
-// ── Year mode state ──────────────────────────────────────────────────────────
-const stored = JSON.parse(localStorage.getItem('unlockedYears') || '[]') as number[]
-const unlockedYears = ref<Set<number>>(new Set(stored))
 
 // ── Pack mode state ──────────────────────────────────────────────────────────
 const storedPhotos = JSON.parse(localStorage.getItem('unlockedPhotos') || '[]') as string[]
@@ -35,42 +24,31 @@ const usedTokens = ref<string[]>(
   JSON.parse(localStorage.getItem('usedTokens') || '[]') as string[]
 )
 
-// Year to auto-open pack for (set via hash, year mode only)
-const autoOpenYear = ref<number | null>(null)
-
 // Pack mode: data for the full-screen reveal overlay
 const packRevealData = ref<{ items: RevealItem[]; firstYear: number } | null>(null)
 
 // ── Derived helpers ──────────────────────────────────────────────────────────
 function isYearComplete(year: number): boolean {
-  if (albumMode.value === 'year') return unlockedYears.value.has(year)
   const p = pages.find(pg => pg.year === year)!
   return p.photos.every(ph => unlockedPhotos.value.has(ph.id))
 }
 
 // Photo IDs already revealed for a given year page (drives YearPage initial state)
 const currentPreRevealed = computed<string[]>(() => {
-  if (currentPage.value === 0) return []
+  if (currentPage.value === 0 || currentPage.value > pages.length) return []
   const page = pages[currentPage.value - 1]!
-  if (albumMode.value === 'year') {
-    return unlockedYears.value.has(page.year) ? page.photos.map(p => p.id) : []
-  }
   return page.photos.filter(p => unlockedPhotos.value.has(p.id)).map(p => p.id)
 })
 
-// Effective unlocked-year set for AlbumSummary (works in both modes)
-const effectiveUnlockedYears = computed<Set<number>>(() => {
-  if (albumMode.value === 'year') return unlockedYears.value
-  return new Set(pages.filter(p => isYearComplete(p.year)).map(p => p.year))
-})
+// Completed years — for AlbumSummary
+const completedYears = computed<Set<number>>(
+  () => new Set(pages.filter(p => isYearComplete(p.year)).map(p => p.year))
+)
 
 // Album complete — unlocks epilogue page
-const isAlbumComplete = computed(() => {
-  if (albumMode.value === 'pack') return usedTokens.value.length >= packs.length
-  return pages.every(p => unlockedYears.value.has(p.year))
-})
+const isAlbumComplete = computed(() => usedTokens.value.length >= packs.length)
 
-// Total pages including epilogue when complete
+// Total navigable pages (year pages + epilogue when complete)
 const totalPages = computed(() => pages.length + (isAlbumComplete.value ? 1 : 0))
 
 // Landing page (shown once on first visit)
@@ -112,14 +90,11 @@ function resetAll() {
     adminConfirm.value = true
     return
   }
-  unlockedYears.value = new Set()
-  localStorage.removeItem('unlockedYears')
   unlockedPhotos.value = new Set()
   localStorage.removeItem('unlockedPhotos')
   usedTokens.value = []
   localStorage.removeItem('usedTokens')
   currentPage.value = 0
-  autoOpenYear.value = null
   packRevealData.value = null
   closeAdmin()
 }
@@ -147,18 +122,26 @@ function openSummary() { showSummary.value = true }
 function closeSummary() { showSummary.value = false }
 
 function goToYear(year: number) {
-  const pageIdx = pages.findIndex(p => p.year === year)
-  if (pageIdx !== -1) {
-    direction.value = currentPage.value <= pageIdx + 1 ? 'left' : 'right'
-    currentPage.value = pageIdx + 1
+  if (year === 0) {
+    // Navigate to cover
+    direction.value = currentPage.value > 0 ? 'right' : 'left'
+    currentPage.value = 0
+  } else {
+    const pageIdx = pages.findIndex(p => p.year === year)
+    if (pageIdx !== -1) {
+      direction.value = currentPage.value <= pageIdx + 1 ? 'left' : 'right'
+      currentPage.value = pageIdx + 1
+    }
   }
   closeSummary()
 }
 
-function unlockYear(year: number) {
-  if (albumMode.value !== 'year') return
-  unlockedYears.value = new Set([...unlockedYears.value, year])
-  localStorage.setItem('unlockedYears', JSON.stringify([...unlockedYears.value]))
+function goToEpilogue() {
+  if (isAlbumComplete.value) {
+    direction.value = 'left'
+    currentPage.value = pages.length + 1
+  }
+  closeSummary()
 }
 
 // ── Hash handler ─────────────────────────────────────────────────────────────
@@ -167,22 +150,7 @@ onMounted(() => {
   if (match) {
     const token = match[1]!
 
-    // Auto-detect token type — works regardless of current albumMode setting
-    const year = tokenToYear[token]
-
-    if (year !== undefined) {
-      // Year token → year mode flow
-      albumMode.value = 'year'
-      const pageIdx = pages.findIndex(p => p.year === year)
-      if (pageIdx !== -1 && !unlockedYears.value.has(year)) {
-        direction.value = 'left'
-        currentPage.value = pageIdx + 1
-        autoOpenYear.value = year
-      }
-    } else if (packTokens.has(token)) {
-      // Pack token → queue-based reveal (auto-switch to pack mode)
-      albumMode.value = 'pack'
-
+    if (packTokens.has(token)) {
       // Only proceed if this token hasn't been used yet
       if (!usedTokens.value.includes(token)) {
         const packIndex = usedTokens.value.length   // 0-based: next pack in queue
@@ -282,11 +250,9 @@ function onTouchEnd(e: TouchEvent) {
         :total="totalPages"
         :unlocked="isYearComplete(pages[currentPage - 1]!.year)"
         :pre-revealed="currentPreRevealed"
-        :album-mode="albumMode"
-        :auto-open="albumMode === 'year' && autoOpenYear === pages[currentPage - 1]!.year"
+        :has-next="currentPage < totalPages"
         @prev="goPrev"
         @next="goNext"
-        @unlock="unlockYear(pages[currentPage - 1]!.year)"
         @summary="openSummary"
         @expand="openLightbox"
       />
@@ -297,10 +263,13 @@ function onTouchEnd(e: TouchEvent) {
     <Transition name="summary-slide">
       <AlbumSummary
         v-if="showSummary"
-        :unlocked-years="effectiveUnlockedYears"
-        :current-year="currentPage > 0 ? pages[currentPage - 1]!.year : null"
-        :unlocked-photos="albumMode === 'pack' ? unlockedPhotos : undefined"
+        :unlocked-years="completedYears"
+        :current-year="currentPage > 0 && currentPage <= pages.length ? pages[currentPage - 1]!.year : null"
+        :unlocked-photos="unlockedPhotos"
+        :is-album-complete="isAlbumComplete"
+        :is-on-epilogue="currentPage === pages.length + 1"
         @go="goToYear"
+        @epilogue="goToEpilogue"
         @close="closeSummary"
       />
     </Transition>
@@ -340,23 +309,9 @@ function onTouchEnd(e: TouchEvent) {
           </div>
 
           <div class="admin-body">
-            <!-- Mode toggle -->
-            <div class="admin-section">
-              <p class="admin-desc">Modo do álbum</p>
-              <div class="admin-mode-row">
-                <button class="mode-btn" :class="{ active: albumMode === 'year' }" @click="albumMode = 'year'">Por ano</button>
-                <button class="mode-btn" :class="{ active: albumMode === 'pack' }" @click="albumMode = 'pack'">Por pacote</button>
-              </div>
-              <p class="admin-mode-hint">
-                {{ albumMode === 'year' ? 'Cada QR abre um ano completo' : 'Cada QR abre fotos de anos diferentes' }}
-              </p>
-            </div>
-
-            <div class="admin-divider"></div>
-
             <!-- Open all packs shortcut -->
             <div class="admin-section">
-              <p class="admin-desc">Abre todos os {{ packs.length }} pacotes de uma vez (para testes).</p>
+              <p class="admin-desc">Abre todos os pacotes de uma vez (para testes).</p>
               <button class="admin-open-all-btn" @click="openAllPacks">
                 Abrir todos os pacotes ✦
               </button>
@@ -522,40 +477,6 @@ html, body {
   height: 1px;
   background: rgba(196, 151, 59, 0.12);
   margin-bottom: 16px;
-}
-
-.admin-mode-row {
-  display: flex;
-  gap: 8px;
-}
-
-.mode-btn {
-  flex: 1;
-  padding: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  font-family: 'Lato', sans-serif;
-  font-size: 13px;
-  color: rgba(245, 230, 200, 0.45);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.mode-btn.active {
-  background: rgba(196, 151, 59, 0.15);
-  border-color: rgba(196, 151, 59, 0.5);
-  color: #c4973b;
-}
-.mode-btn:active { opacity: 0.7; }
-
-.admin-mode-hint {
-  font-family: 'Lato', sans-serif;
-  font-size: 11px;
-  font-weight: 300;
-  color: rgba(245, 230, 200, 0.3);
-  letter-spacing: 0.2px;
-  line-height: 1.4;
 }
 
 .admin-action {

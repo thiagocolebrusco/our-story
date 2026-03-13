@@ -5,10 +5,13 @@ const props = defineProps<{
   unlockedYears: Set<number>
   currentYear: number | null
   unlockedPhotos?: Set<string>
+  isAlbumComplete?: boolean
+  isOnEpilogue?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'go', year: number): void
+  (e: 'epilogue'): void
   (e: 'close'): void
 }>()
 
@@ -51,6 +54,21 @@ function photoCount(year: number): { revealed: number; total: number } {
 
       <!-- Year grid -->
       <div class="year-grid">
+
+        <!-- Cover card -->
+        <button
+          class="year-card cover-card is-unlocked"
+          :class="{ 'is-current': currentYear === null && !isOnEpilogue }"
+          @click="$emit('go', 0)"
+        >
+          <div class="card-status">
+            <span class="status-icon unlocked">♡</span>
+          </div>
+          <div class="card-year" style="font-size:13px; letter-spacing:0.5px">Our Story</div>
+          <div class="card-title">Capa</div>
+        </button>
+
+        <!-- Year cards -->
         <button
           v-for="page in pages"
           :key="page.year"
@@ -75,6 +93,21 @@ function photoCount(year: number): { revealed: number; total: number } {
             {{ photoCount(page.year).revealed }}/{{ photoCount(page.year).total }}
           </div>
         </button>
+
+        <!-- Epilogue card (only when album is complete) -->
+        <button
+          v-if="isAlbumComplete"
+          class="year-card epilogue-card is-unlocked"
+          :class="{ 'is-current': isOnEpilogue }"
+          @click="$emit('epilogue')"
+        >
+          <div class="card-status">
+            <span class="status-icon unlocked">✦</span>
+          </div>
+          <div class="card-year" style="font-size:14px; letter-spacing:-0.5px">2026 — ?</div>
+          <div class="card-title">Presente e futuro</div>
+        </button>
+
       </div>
 
       <!-- Close button -->
@@ -266,6 +299,23 @@ function photoCount(year: number): { revealed: number; total: number } {
 
 .card-photo-count.complete {
   color: #c4973b;
+}
+
+/* ── Cover card ── */
+.cover-card .card-year {
+  color: #6b3a2a;
+}
+
+/* ── Epilogue card ── */
+.epilogue-card {
+  background: linear-gradient(135deg, #fdf0f5, #fef9f0);
+  border-color: rgba(196, 151, 59, 0.4);
+}
+.epilogue-card .card-year {
+  color: #7a2d3d;
+}
+.epilogue-card .card-title {
+  font-style: italic;
 }
 
 /* ── Close button ── */

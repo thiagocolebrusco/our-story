@@ -50,9 +50,6 @@ export interface YearPage {
   gift?: Gift
 }
 
-// Maps opaque token → year number for URL unlock handling (year mode)
-export const tokenToYear: Record<string, number> = {}
-
 // ── Pack mode ────────────────────────────────────────────────────────────────
 // In pack mode each QR code unlocks a pack of photos from DIFFERENT years.
 // A year is "complete" once all its photos are individually unlocked.
@@ -177,23 +174,11 @@ export const tokenToYear: Record<string, number> = {}
 // pack 1, the 2nd token opens pack 2, etc., regardless of which token it is.
 // Add/remove tokens freely; the count just needs to match the number of packs.
 export const packTokens: ReadonlySet<string> = new Set([
-  'a2kp7nmx',
-  'b8vr3qhc',
-  'c5tz9wjd',
-  'd7mx4bkr',
-  'e3nf8ypq',
-  'f9cs2vwt',
-  'g4hb7znk',
-  'h6qr5mcj',
-  'i2wp9tfx',
-  'j8nd3kcv',
-  'k5fv6rxb',
-  'l7th2qnm',
-  'm4jx8bpw',
-  'n9kc3fzr',
-  'o6mb5ytj',
-  'p3qn7hxc',
-  'q8rz4vdk',
+  'a2kp7nmx', 'b8vr3qhc', 'c5tz9wjd', 'd7mx4bkr', 'e3nf8ypq',
+  'f9cs2vwt', 'g4hb7znk', 'h6qr5mcj', 'i2wp9tfx', 'j8nd3kcv',
+  'k5fv6rxb', 'l7th2qnm', 'm4jx8bpw', 'n9kc3fzr', 'o6mb5ytj',
+  'p3qn7hxc', 'q8rz4vdk', 'r7ks2mxp', 's4ht6wnf', 't9cj3brz',
+  'u5mq8kxd', 'v2fp7nrb', 'w6yz4tkq', 'x3nc9hdm', 'y8vb5qjw',
 ])
 
 // ── PACKS (content queue) ─────────────────────────────────────────────────────
@@ -202,23 +187,31 @@ export const packTokens: ReadonlySet<string> = new Set([
 // Each number must appear in exactly one pack (all 108 must be covered).
 //
 // Year completion schedule (non-chronological, packs 1–2 complete nothing):
-//   pack-1  → no completion        (intro: 2009, 2012, 2015, 2019, 2022, 2025 firsts)
-//   pack-2  → no completion        (intro: 2010, 2011, 2013, 2016, 2018, 2021 firsts)
-//   pack-3  → completes 2015
-//   pack-4  → completes 2021
-//   pack-5  → completes 2020
+//   pack-1  → no completion  (intro: 2009, 2010, 2011, 2012, 2015)
+//   pack-2  → no completion  (intro: 2014, 2016, 2017, 2018, 2019)
+//   pack-3  → completes 2021
+//   pack-4  → completes 2015
+//   pack-5  → completes 2023
 //   pack-6  → completes 2011
-//   pack-7  → completes 2009, 2024
-//   pack-8  → completes 2013
-//   pack-9  → completes 2023
-//   pack-10 → completes 2010
-//   pack-11 → completes 2012, 2014
+//   pack-7  → completes 2024
+//   pack-8  → completes 2014
+//   pack-9  → completes 2013
+//   pack-10 → completes 2020
+//   pack-11 → no completion
 //   pack-12 → completes 2016
-//   pack-13 → completes 2018
-//   pack-14 → completes 2019
+//   pack-13 → completes 2009
+//   pack-14 → no completion
 //   pack-15 → completes 2022
-//   pack-16 → completes 2017
-//   pack-17 → completes 2025
+//   pack-16 → completes 2010
+//   pack-17 → no completion
+//   pack-18 → completes 2012
+//   pack-19 → no completion
+//   pack-20 → completes 2017
+//   pack-21 → completes 2018
+//   pack-22 → no completion
+//   pack-23 → completes 2019
+//   pack-24 → no completion
+//   pack-25 → completes 2025
 export interface PackPhoto {
   year: number
   photoId: string
@@ -230,23 +223,31 @@ export interface Pack {
 }
 
 const packDefinitions: { id: string; indices: number[] }[] = [
-  { id: 'pack-1',  indices: [  1,  20,  39,  65,  87, 102] },
-  { id: 'pack-2',  indices: [  7,  16,  29,  43,  56,  84] },
-  { id: 'pack-3',  indices: [  2,  40,  41,  42,  57,  78,  94] },
-  { id: 'pack-4',  indices: [  3,  17,  58,  79,  85,  86, 103] },
-  { id: 'pack-5',  indices: [ 21,  30,  59,  80,  83, 104] },
-  { id: 'pack-6',  indices: [  8,  18,  19,  22,  66,  88] },
-  { id: 'pack-7',  indices: [  4,   6,   9,  31,  44,  67, 101] },
-  { id: 'pack-8',  indices: [  5,  23,  33,  60,  81,  95] },
-  { id: 'pack-9',  indices: [ 10,  24,  48,  61,  96,  97] },
-  { id: 'pack-10', indices: [ 15,  25,  34,  49,  68,  89] },
-  { id: 'pack-11', indices: [ 11,  28,  35,  38,  50,  62,  82] },
-  { id: 'pack-12', indices: [ 26,  36,  47,  51,  69, 105] },
-  { id: 'pack-13', indices: [ 37,  45,  52,  64,  70, 106] },
-  { id: 'pack-14', indices: [ 12,  27,  53,  71,  72,  77,  90] },
-  { id: 'pack-15', indices: [ 14,  54,  73,  91,  93, 107] },
-  { id: 'pack-16', indices: [ 46,  55,  74,  92,  98,  99] },
-  { id: 'pack-17', indices: [ 13,  32,  63,  75,  76, 100, 108] },
+  { id: 'pack-1',  indices: [  1,   7,  16,  20,  39] },
+  { id: 'pack-2',  indices: [ 34,  43,  48,  56,  65] },
+  { id: 'pack-3',  indices: [ 78,  84,  85,  86] },        // completes 2021
+  { id: 'pack-4',  indices: [ 40,  41,  42,  87] },        // completes 2015
+  { id: 'pack-5',  indices: [ 94,  95,  96,  97] },        // completes 2023
+  { id: 'pack-6',  indices: [ 17,  18,  19,  29] },        // completes 2011
+  { id: 'pack-7',  indices: [ 98,  99, 100, 101] },        // completes 2024
+  { id: 'pack-8',  indices: [ 35,  36,  37,  38] },        // completes 2014
+  { id: 'pack-9',  indices: [ 30,  31,  32,  33] },        // completes 2013
+  { id: 'pack-10', indices: [ 80,  81,  82,  83] },        // completes 2020
+  { id: 'pack-11', indices: [  2,   8,  10,  21] },
+  { id: 'pack-12', indices: [ 44,  45,  46,  47] },        // completes 2016
+  { id: 'pack-13', indices: [  3,   4,   5,   6] },        // completes 2009
+  { id: 'pack-14', indices: [  9,  11,  22,  49,  60] },
+  { id: 'pack-15', indices: [ 66,  67,  91,  92,  93] },   // completes 2022
+  { id: 'pack-16', indices: [ 12,  13,  14,  15,  68] },   // completes 2010
+  { id: 'pack-17', indices: [ 23,  50,  61,  69] },
+  { id: 'pack-18', indices: [ 24,  25,  26,  27,  28] },   // completes 2012
+  { id: 'pack-19', indices: [ 51,  62,  70, 102] },
+  { id: 'pack-20', indices: [ 52,  53,  54,  55,  71] },   // completes 2017
+  { id: 'pack-21', indices: [ 63,  64,  72,  73, 103] },   // completes 2018
+  { id: 'pack-22', indices: [ 57,  74, 104, 105] },
+  { id: 'pack-23', indices: [ 75,  76,  77, 106] },        // completes 2019
+  { id: 'pack-24', indices: [ 58,  79,  88, 107] },
+  { id: 'pack-25', indices: [ 59,  89,  90, 108] },        // completes 2025
 ]
 
 export const coverData = {
@@ -531,9 +532,6 @@ export const pages: YearPage[] = [
     ],
   },
 ]
-
-// Build token → year lookup from the pages array
-pages.forEach(p => { tokenToYear[p.token] = p.year })
 
 // ── Build packs from index-based definitions ──────────────────────────────
 // Flat list of every photo in album order (index 1 = first photo of 2009)
