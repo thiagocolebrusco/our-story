@@ -134,6 +134,14 @@
       letter-spacing: 3px;
     }
 
+    .card-token {
+      font-family: 'Lato', monospace;
+      font-size: 9px;
+      font-weight: 300;
+      color: rgba(196, 151, 59, 0.55);
+      letter-spacing: 1.5px;
+    }
+
     /* ── Clickable card link ── */
     a.card {
       text-decoration: none;
@@ -214,6 +222,7 @@
         <div class="card-star">✦</div>
         <div class="qr-wrap" id="qr-${token}"></div>
         <div class="card-deco">♡</div>
+        <div class="card-token">${token}</div>
       `
       grid.appendChild(card)
 
