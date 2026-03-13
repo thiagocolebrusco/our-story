@@ -113,7 +113,7 @@ onMounted(runAnimation)
               :style="`--rot: ${ROTATIONS[i] ?? 0}deg`"
             >
               <div class="photo-img-area">
-                <img :src="`https://picsum.photos/seed/${item.photoId}/300/255`" :alt="item.caption" class="photo-img" />
+                <img :src="`/photos/${item.photoId}.jpg`" :alt="item.caption" class="photo-img" />
               </div>
               <div class="photo-label">
                 <div class="photo-year-num">{{ item.year }}</div>

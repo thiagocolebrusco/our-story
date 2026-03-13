@@ -92,9 +92,9 @@ export const tokenToYear: Record<string, number> = {}
 // 28   2012-9     2012   Um capítulo fechado com amor
 // 29   2013-1     2013   Tantas primeiras vezes
 // 30   2013-2     2013   Minha melhor companhia de viagem
-// 31   2013-3     2013   Manhãs de domingo
-// 32   2013-4     2013   Nunca um momento entediante
-// 33   2013-5     2013   Tudo o que eu precisava
+// 31   2013-4     2013   Nunca um momento entediante
+// 32   2013-5     2013   Tudo o que eu precisava
+// 33   2013-6     2013   Manhãs de domingo
 // 34   2014-1     2014   Evoluindo lado a lado
 // 35   2014-2     2014   Para onde vamos agora?
 // 36   2014-3     2014   Felizes no nosso caos
@@ -336,9 +336,9 @@ export const pages: YearPage[] = [
     photos: [
       { id: '2013-1', caption: 'Tantas primeiras vezes',               rotation: -3,   size: 'normal' },
       { id: '2013-2', caption: 'Minha melhor companhia de viagem',     rotation:  1,   size: 'normal' },
-      { id: '2013-3', caption: 'Manhãs de domingo',                    rotation: -2.5, size: 'normal' },
-      { id: '2013-4', caption: 'Nunca um momento entediante',          rotation:  3.5, size: 'normal' },
-      { id: '2013-5', caption: 'Tudo o que eu precisava',              rotation: -1,   size: 'normal' },
+      { id: '2013-4', caption: 'Nunca um momento entediante',          rotation: -2.5, size: 'normal' },
+      { id: '2013-5', caption: 'Tudo o que eu precisava',              rotation:  3.5, size: 'normal' },
+      { id: '2013-6', caption: 'Manhãs de domingo',                    rotation: -1,   size: 'normal' },
     ],
   },
   {

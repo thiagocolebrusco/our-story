@@ -20,7 +20,7 @@ watch(() => props.revealed, (val) => {
 })
 
 function getImageUrl(id: string) {
-  return `https://picsum.photos/seed/${id}/300/255`
+  return `/photos/${id}.jpg`
 }
 </script>
 
