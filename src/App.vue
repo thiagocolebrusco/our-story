@@ -183,8 +183,11 @@ onMounted(() => {
       }
     }
 
-    // If she scanned a QR link, skip the landing page
-    dismissLanding()
+    // On the first-ever scan let her experience the intro landing page;
+    // subsequent scans skip straight past it to the pack reveal.
+    if (usedTokens.value.length > 1) {
+      dismissLanding()
+    }
 
     // Clean hash so reload doesn't re-trigger
     window.history.replaceState({}, '', window.location.pathname + window.location.search)
