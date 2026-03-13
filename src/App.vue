@@ -17,7 +17,7 @@ const direction = ref<'left' | 'right'>('left')
 // ── Album mode ───────────────────────────────────────────────────────────────
 type AlbumMode = 'year' | 'pack'
 const albumMode = ref<AlbumMode>(
-  (localStorage.getItem('albumMode') as AlbumMode | null) ?? 'year'
+  (localStorage.getItem('albumMode') as AlbumMode | null) ?? 'pack'
 )
 watch(albumMode, val => localStorage.setItem('albumMode', val))
 
