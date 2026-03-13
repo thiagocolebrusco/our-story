@@ -171,7 +171,7 @@ async function openPack() {
     </header>
 
     <!-- Photos -->
-    <main class="photos-area" :class="`layout-${page.photos.length}`">
+    <main class="photos-area" :class="[`layout-${page.photos.length}`, page.photos.length > 4 ? 'layout-many' : '']">
       <!-- Layout: 2 photos -->
       <template v-if="page.photos.length === 2">
         <div class="row center">
@@ -206,6 +206,20 @@ async function openPack() {
         <div class="row center">
           <PhotoSlot :photo="page.photos[2]!" :index="2" :revealed="!!revealed[2]" @expand="expandPhoto(2)" />
           <PhotoSlot :photo="page.photos[3]!" :index="3" :revealed="!!revealed[3]" @expand="expandPhoto(3)" />
+        </div>
+      </template>
+
+      <!-- Layout: 5+ photos (scrollable 2-column grid) -->
+      <template v-else>
+        <div class="photo-grid">
+          <PhotoSlot
+            v-for="(photo, i) in page.photos"
+            :key="photo.id"
+            :photo="photo"
+            :index="i"
+            :revealed="!!revealed[i]"
+            @expand="expandPhoto(i)"
+          />
         </div>
       </template>
     </main>
@@ -459,6 +473,28 @@ async function openPack() {
 .layout-3 .row:first-child .polaroid { width: 157px; }
 .layout-3 .solo .polaroid { width: 172px; }
 .layout-4 .polaroid { width: 155px; }
+
+/* Layout: 5+ photos — scrollable 2-column grid */
+.photos-area.layout-many {
+  overflow: hidden;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 4px 8px;
+  justify-items: center;
+  align-content: start;
+  scrollbar-width: none;
+}
+.photo-grid::-webkit-scrollbar { display: none; }
+
+.photo-grid .polaroid { width: 148px; }
 
 /* Footer */
 .page-footer {
