@@ -151,23 +151,41 @@ export interface Pack {
   photos: PackPhoto[]
 }
 
+// Year completion schedule (non-chronological, packs 1–2 complete nothing):
+//   pack-1  → no completion        (intro: 2009-first, 2016-first, 2023-first)
+//   pack-2  → no completion        (intro: 2011-first, 2018-first, 2025-first)
+//   pack-3  → completes 2015, 2018
+//   pack-4  → completes 2010
+//   pack-5  → completes 2020
+//   pack-6  → completes 2024
+//   pack-7  → completes 2012
+//   pack-8  → completes 2009
+//   pack-9  → completes 2023
+//   pack-10 → completes 2011
+//   pack-11 → completes 2019
+//   pack-12 → completes 2013
+//   pack-13 → completes 2014
+//   pack-14 → completes 2016
+//   pack-15 → completes 2021, 2022
+//   pack-16 → no completion        (2017 build-up)
+//   pack-17 → completes 2017, 2025
 const packDefinitions: { id: string; indices: number[] }[] = [
-  { id: 'pack-1',  indices: [ 1, 18, 37] },
-  { id: 'pack-2',  indices: [ 2, 20, 41] },
-  { id: 'pack-3',  indices: [ 3, 23, 44] },
-  { id: 'pack-4',  indices: [ 4, 11, 34] },
-  { id: 'pack-5',  indices: [ 5, 15, 46] },
-  { id: 'pack-6',  indices: [ 6, 27, 38] },
-  { id: 'pack-7',  indices: [ 7, 29, 42] },
-  { id: 'pack-8',  indices: [ 8, 32, 47] },
-  { id: 'pack-9',  indices: [ 9, 12, 24] },
-  { id: 'pack-10', indices: [10, 21, 35] },
-  { id: 'pack-11', indices: [13, 30, 45] },
-  { id: 'pack-12', indices: [14, 19, 39] },
-  { id: 'pack-13', indices: [16, 28, 43] },
-  { id: 'pack-14', indices: [17, 33, 48] },
-  { id: 'pack-15', indices: [22, 36, 40] },
-  { id: 'pack-16', indices: [25, 31] },
+  { id: 'pack-1',  indices: [ 1, 20, 41] },
+  { id: 'pack-2',  indices: [ 6, 27, 46] },
+  { id: 'pack-3',  indices: [18, 19, 28] },
+  { id: 'pack-4',  indices: [ 4,  5, 11] },
+  { id: 'pack-5',  indices: [15, 32, 33] },
+  { id: 'pack-6',  indices: [ 2, 44, 45] },
+  { id: 'pack-7',  indices: [ 9, 10, 29] },
+  { id: 'pack-8',  indices: [ 3, 21, 42] },
+  { id: 'pack-9',  indices: [ 7, 34, 43] },
+  { id: 'pack-10', indices: [ 8, 30, 47] },
+  { id: 'pack-11', indices: [12, 31, 37] },
+  { id: 'pack-12', indices: [13, 14, 48] },
+  { id: 'pack-13', indices: [16, 17, 38] },
+  { id: 'pack-14', indices: [22, 35, 39] },
+  { id: 'pack-15', indices: [23, 36, 40] },
+  { id: 'pack-16', indices: [24, 25] },
   { id: 'pack-17', indices: [26, 49] },
 ]
 
