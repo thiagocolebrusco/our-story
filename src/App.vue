@@ -108,6 +108,12 @@ function onPackGo(year: number) {
   }
 }
 
+function onPackEpilogue() {
+  packRevealData.value = null
+  direction.value = 'left'
+  currentPage.value = pages.length + 1
+}
+
 // Photo lightbox
 const lightbox = ref<{ photos: Photo[], idx: number } | null>(null)
 
@@ -298,7 +304,9 @@ function onTouchEnd(e: TouchEvent) {
         v-if="packRevealData"
         :items="packRevealData.items"
         :first-year="packRevealData.firstYear"
+        :is-last-pack="isAlbumComplete"
         @go="onPackGo"
+        @epilogue="onPackEpilogue"
       />
     </Transition>
 

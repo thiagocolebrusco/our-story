@@ -536,11 +536,6 @@ export const pages: YearPage[] = [
     subtitle: 'E eu escolheria de novo ♡',
     bgTone: 'cream',
     decoration: 'flowers',
-    gift: {
-      title: 'Um presente especial ♡',
-      image: 'https://picsum.photos/seed/gift2025/600/400',
-      description: 'Substitua isso com a descrição do seu presente aqui. Pode ser um jantar, uma viagem, qualquer coisa especial que você tenha preparado para ela.',
-    },
     photos: [
       { id: '2025-1', caption: '17 anos ♡',                            rotation:  1,   size: 'normal' },
       { id: '2025-2', caption: 'E eu escolheria de novo',              rotation: -2.5, size: 'normal' },

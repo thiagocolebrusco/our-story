@@ -11,9 +11,13 @@ export interface RevealItem {
 const props = defineProps<{
   items: RevealItem[]
   firstYear: number
+  isLastPack?: boolean
 }>()
 
-const emit = defineEmits<{ (e: 'go', year: number): void }>()
+const emit = defineEmits<{
+  (e: 'go', year: number): void
+  (e: 'epilogue'): void
+}>()
 
 // ── Animation state ──────────────────────────────────────────────────────────
 const packVisible  = ref(false)
@@ -26,6 +30,8 @@ const showButton   = ref(false)
 
 // Fixed rotations for up to 7 photo cards
 const ROTATIONS = [-7, 3, -4, 6, -2, 5, -3]
+
+const completionBurst = ref(false)
 
 function sleep(ms: number) { return new Promise<void>(r => setTimeout(r, ms)) }
 
@@ -56,6 +62,10 @@ async function runAnimation() {
   }
 
   await sleep(500)
+  if (props.isLastPack) {
+    completionBurst.value = true
+    await sleep(200)
+  }
   showButton.value = true
 }
 
@@ -126,13 +136,43 @@ onMounted(runAnimation)
 
     </div>
 
+    <!-- ── Completion rain (last pack only) ── -->
+    <Transition name="rain-fade">
+      <div v-if="showButton && isLastPack" class="complete-rain" aria-hidden="true">
+        <span v-for="i in 18" :key="i" class="rain-piece" :style="`--i:${i}`">{{ i % 3 === 0 ? '♡' : '✦' }}</span>
+      </div>
+    </Transition>
+
+    <!-- ── Completion burst (second wave) ── -->
+    <div v-if="completionBurst && isLastPack" class="burst-wrap completion-burst-wrap" aria-hidden="true">
+      <div v-for="i in 18" :key="i" class="burst-particle comp-particle" :style="`--i:${i}`"></div>
+      <div class="burst-ring r1 comp-ring"></div>
+      <div class="burst-ring r2 comp-ring"></div>
+      <div class="burst-glow comp-glow"></div>
+    </div>
+
     <!-- ── Footer (years + CTA button) ── -->
     <Transition name="footer-rise">
       <div v-if="showButton" class="footer">
-        <div class="footer-years">{{ items.map(it => it.year).join(' · ') }}</div>
-        <button class="go-btn" @click="emit('go', firstYear)">
-          Ver no álbum ✦
-        </button>
+
+        <!-- Regular footer -->
+        <template v-if="!isLastPack">
+          <div class="footer-years">{{ items.map(it => it.year).join(' · ') }}</div>
+          <button class="go-btn" @click="emit('go', firstYear)">
+            Ver no álbum ✦
+          </button>
+        </template>
+
+        <!-- Completion footer (last pack) -->
+        <template v-else>
+          <div class="complete-ornament">✦ ♡ ✦</div>
+          <div class="complete-title">Nossa história<br>está completa</div>
+          <div class="complete-sub">17 anos de amor revelados ♡</div>
+          <button class="epilogue-btn" @click="emit('epilogue')">
+            Ver o nosso futuro ✦
+          </button>
+        </template>
+
       </div>
     </Transition>
 
@@ -473,5 +513,114 @@ onMounted(runAnimation)
 .footer-rise-enter-from {
   opacity: 0;
   transform: translateY(20px);
+}
+
+/* ── Completion rain ── */
+.complete-rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.rain-piece {
+  position: absolute;
+  top: -24px;
+  left: calc(var(--i) * 5.5% + 1%);
+  font-size: calc(10px + (var(--i) % 3) * 5px);
+  color: rgba(196, 151, 59, 0.65);
+  animation: rain-fall calc(3.5s + var(--i) * 0.18s) linear infinite;
+  animation-delay: calc(var(--i) * 0.28s - 0.5s);
+  text-shadow: 0 0 8px rgba(196, 151, 59, 0.4);
+}
+@keyframes rain-fall {
+  0%   { transform: translateY(0) rotate(0deg);    opacity: 0; }
+  8%   { opacity: 0.9; }
+  88%  { opacity: 0.7; }
+  100% { transform: translateY(110vh) rotate(340deg); opacity: 0; }
+}
+.rain-fade-enter-active { transition: opacity 0.6s ease; }
+.rain-fade-enter-from   { opacity: 0; }
+
+/* ── Second completion burst ── */
+.completion-burst-wrap {
+  z-index: 2;
+}
+.comp-particle {
+  animation: particle-fly 0.9s ease-out forwards;
+  background: radial-gradient(circle, #e8c87a 30%, #c4973b);
+  width: 8px;
+  height: 8px;
+}
+.comp-ring {
+  animation: ring-expand 0.8s ease-out forwards;
+  border-color: rgba(232, 200, 122, 0.5);
+}
+.comp-glow {
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(232, 200, 122, 0.3) 0%, transparent 70%);
+  animation: glow-fade 0.9s ease-out forwards;
+}
+
+/* ── Completion footer content ── */
+.complete-ornament {
+  font-family: 'Dancing Script', cursive;
+  font-size: 15px;
+  color: rgba(196, 151, 59, 0.7);
+  letter-spacing: 6px;
+  animation: complete-pulse 2.5s ease-in-out infinite;
+}
+.complete-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 38px;
+  font-weight: 600;
+  color: #e8c87a;
+  text-align: center;
+  line-height: 1.15;
+  text-shadow:
+    0 0 30px rgba(232, 200, 122, 0.6),
+    0 0 60px rgba(196, 151, 59, 0.3);
+  animation: complete-pulse 2.5s ease-in-out infinite;
+}
+.complete-sub {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+  color: rgba(245, 230, 200, 0.65);
+  letter-spacing: 1.2px;
+  text-align: center;
+}
+@keyframes complete-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%       { filter: brightness(1.2); }
+}
+
+/* ── Epilogue CTA button ── */
+.epilogue-btn {
+  padding: 16px 44px;
+  background: linear-gradient(135deg, #5c2235, #7a2d3d);
+  border: 1.5px solid #c4973b;
+  border-radius: 28px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 22px;
+  font-weight: 600;
+  color: #f5e6c8;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: epilogue-glow 2.2s ease-in-out infinite;
+}
+.epilogue-btn:active {
+  transform: scale(0.96);
+}
+@keyframes epilogue-glow {
+  0%, 100% {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 20px rgba(196, 151, 59, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 40px rgba(196, 151, 59, 0.5), 0 0 70px rgba(196, 151, 59, 0.2);
+  }
 }
 </style>
