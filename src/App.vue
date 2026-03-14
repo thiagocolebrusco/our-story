@@ -657,7 +657,7 @@ html, body {
 .scan-fab {
   position: absolute;
   bottom: 72px;
-  right: 14px;
+  left: 14px;
   width: 40px;
   height: 40px;
   background: rgba(196, 151, 59, 0.1);
