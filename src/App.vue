@@ -8,6 +8,7 @@ import PackRevealOverlay from './components/PackRevealOverlay.vue'
 import type { RevealItem } from './components/PackRevealOverlay.vue'
 import LandingPage from './components/LandingPage.vue'
 import EpiloguePage from './components/EpiloguePage.vue'
+import QRScannerOverlay from './components/QRScannerOverlay.vue'
 import { pages, packTokens, packs } from './data/album'
 import type { Photo } from './data/album'
 
@@ -54,6 +55,9 @@ const isAlbumComplete = computed(() => usedTokens.value.length >= packs.length)
 
 // Total navigable pages (year pages + epilogue when complete)
 const totalPages = computed(() => pages.length + (isAlbumComplete.value ? 1 : 0))
+
+// QR scanner
+const showScanner = ref(false)
 
 // Landing page (shown once on first visit)
 const showLanding = ref(localStorage.getItem('hasSeenLanding') !== 'true')
@@ -154,60 +158,64 @@ function goToEpilogue() {
   closeSummary()
 }
 
+// ── Pack unlock (shared by QR hash handler and in-app scanner) ───────────────
+function unlockPackToken(token: string) {
+  if (!packTokens.has(token)) return
+  if (usedTokens.value.includes(token)) return
+
+  const packIndex = usedTokens.value.length   // 0-based: next pack in queue
+  const pack = packs[packIndex]
+  if (!pack) return
+
+  // Snapshot which years in this pack were already complete before unlock
+  const yearsInPack = [...new Set(pack.photos.map(ph => ph.year))]
+  const alreadyComplete = new Set(yearsInPack.filter(y => isYearComplete(y)))
+
+  // Record this token as used
+  usedTokens.value = [...usedTokens.value, token]
+  localStorage.setItem('usedTokens', JSON.stringify(usedTokens.value))
+
+  // Persist newly unlocked photos
+  const newPhotoIds = pack.photos.map(ph => ph.photoId)
+  unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
+  localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
+
+  // Detect which years were just completed by this pack
+  const completedYears = yearsInPack
+    .filter(y => !alreadyComplete.has(y) && isYearComplete(y))
+    .map(y => ({ year: y, title: pages.find(p => p.year === y)!.title }))
+
+  // Build reveal items for the overlay
+  const items: RevealItem[] = pack.photos.map(ph => {
+    const yearPage = pages.find(p => p.year === ph.year)!
+    const photo = yearPage.photos.find(p => p.id === ph.photoId)!
+    return {
+      year: ph.year,
+      yearTitle: yearPage.title,
+      photoId: ph.photoId,
+      caption: photo.caption,
+    }
+  })
+
+  packRevealData.value = { items, firstYear: pack.photos[0]!.year, completedYears }
+}
+
+function onScanToken(token: string) {
+  showScanner.value = false
+  unlockPackToken(token)
+  // Subsequent scans skip the intro landing page
+  if (usedTokens.value.length > 1) dismissLanding()
+}
+
 // ── Hash handler ─────────────────────────────────────────────────────────────
 onMounted(() => {
   const match = window.location.hash.match(/^#unlock-([a-z0-9]+)$/)
   if (match) {
     const token = match[1]!
-
-    if (packTokens.has(token)) {
-      // Only proceed if this token hasn't been used yet
-      if (!usedTokens.value.includes(token)) {
-        const packIndex = usedTokens.value.length   // 0-based: next pack in queue
-        const pack = packs[packIndex]
-
-        if (pack) {
-          // Snapshot which years in this pack were already complete before unlock
-          const yearsInPack = [...new Set(pack.photos.map(ph => ph.year))]
-          const alreadyComplete = new Set(yearsInPack.filter(y => isYearComplete(y)))
-
-          // Record this token as used
-          usedTokens.value = [...usedTokens.value, token]
-          localStorage.setItem('usedTokens', JSON.stringify(usedTokens.value))
-
-          // Persist newly unlocked photos
-          const newPhotoIds = pack.photos.map(ph => ph.photoId)
-          unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
-          localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
-
-          // Detect which years were just completed by this pack
-          const completedYears = yearsInPack
-            .filter(y => !alreadyComplete.has(y) && isYearComplete(y))
-            .map(y => ({ year: y, title: pages.find(p => p.year === y)!.title }))
-
-          // Build reveal items for the overlay
-          const items: RevealItem[] = pack.photos.map(ph => {
-            const yearPage = pages.find(p => p.year === ph.year)!
-            const photo = yearPage.photos.find(p => p.id === ph.photoId)!
-            return {
-              year: ph.year,
-              yearTitle: yearPage.title,
-              photoId: ph.photoId,
-              caption: photo.caption,
-            }
-          })
-
-          packRevealData.value = { items, firstYear: pack.photos[0]!.year, completedYears }
-        }
-      }
-    }
-
+    unlockPackToken(token)
     // On the first-ever scan let her experience the intro landing page;
     // subsequent scans skip straight past it to the pack reveal.
-    if (usedTokens.value.length > 1) {
-      dismissLanding()
-    }
-
+    if (usedTokens.value.length > 1) dismissLanding()
     // Clean hash so reload doesn't re-trigger
     window.history.replaceState({}, '', window.location.pathname + window.location.search)
   }
@@ -309,6 +317,35 @@ function onTouchEnd(e: TouchEvent) {
     <!-- Landing page (first visit only) -->
     <Transition name="landing-fade">
       <LandingPage v-if="showLanding" @enter="dismissLanding" />
+    </Transition>
+
+    <!-- Floating scan button (visible whenever no overlay is on top) -->
+    <Transition name="scan-fab-fade">
+      <button
+        v-if="!showLanding && !packRevealData && !lightbox && !showAdmin && !showScanner && !showSummary"
+        class="scan-fab"
+        aria-label="Escanear código QR"
+        @click="showScanner = true"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="3" height="3"/>
+          <rect x="19" y="14" width="2" height="2"/>
+          <rect x="14" y="19" width="2" height="2"/>
+          <rect x="18" y="18" width="3" height="3"/>
+        </svg>
+      </button>
+    </Transition>
+
+    <!-- QR scanner overlay -->
+    <Transition name="scanner-slide">
+      <QRScannerOverlay
+        v-if="showScanner"
+        @token="onScanToken"
+        @close="showScanner = false"
+      />
     </Transition>
 
     <!-- Pack reveal overlay (pack mode, shown after scanning a QR) -->
@@ -615,4 +652,37 @@ html, body {
 .pack-reveal-fade-enter-active { transition: opacity 0.35s ease; }
 .pack-reveal-fade-leave-active { transition: opacity 0.25s ease; }
 .pack-reveal-fade-enter-from, .pack-reveal-fade-leave-to { opacity: 0; }
+
+/* ── Floating scan button ── */
+.scan-fab {
+  position: absolute;
+  bottom: 72px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  background: rgba(196, 151, 59, 0.1);
+  border: 1.5px solid rgba(196, 151, 59, 0.3);
+  border-radius: 12px;
+  color: rgba(196, 151, 59, 0.7);
+  cursor: pointer;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.scan-fab:active {
+  background: rgba(196, 151, 59, 0.22);
+  border-color: rgba(196, 151, 59, 0.55);
+}
+.scan-fab-fade-enter-active { transition: opacity 0.2s ease; }
+.scan-fab-fade-leave-active { transition: opacity 0.15s ease; }
+.scan-fab-fade-enter-from, .scan-fab-fade-leave-to { opacity: 0; }
+
+/* ── QR scanner slide-up transition ── */
+.scanner-slide-enter-active { transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.scanner-slide-leave-active { transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+.scanner-slide-enter-from  { opacity: 0; transform: translateY(100%); }
+.scanner-slide-leave-to    { opacity: 0; transform: translateY(100%); }
 </style>
