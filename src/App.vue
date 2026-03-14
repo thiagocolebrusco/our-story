@@ -25,7 +25,11 @@ const usedTokens = ref<string[]>(
 )
 
 // Pack mode: data for the full-screen reveal overlay
-const packRevealData = ref<{ items: RevealItem[]; firstYear: number } | null>(null)
+const packRevealData = ref<{
+  items: RevealItem[]
+  firstYear: number
+  completedYears: { year: number; title: string }[]
+} | null>(null)
 
 // ── Derived helpers ──────────────────────────────────────────────────────────
 function isYearComplete(year: number): boolean {
@@ -163,6 +167,10 @@ onMounted(() => {
         const pack = packs[packIndex]
 
         if (pack) {
+          // Snapshot which years in this pack were already complete before unlock
+          const yearsInPack = [...new Set(pack.photos.map(ph => ph.year))]
+          const alreadyComplete = new Set(yearsInPack.filter(y => isYearComplete(y)))
+
           // Record this token as used
           usedTokens.value = [...usedTokens.value, token]
           localStorage.setItem('usedTokens', JSON.stringify(usedTokens.value))
@@ -171,6 +179,11 @@ onMounted(() => {
           const newPhotoIds = pack.photos.map(ph => ph.photoId)
           unlockedPhotos.value = new Set([...unlockedPhotos.value, ...newPhotoIds])
           localStorage.setItem('unlockedPhotos', JSON.stringify([...unlockedPhotos.value]))
+
+          // Detect which years were just completed by this pack
+          const completedYears = yearsInPack
+            .filter(y => !alreadyComplete.has(y) && isYearComplete(y))
+            .map(y => ({ year: y, title: pages.find(p => p.year === y)!.title }))
 
           // Build reveal items for the overlay
           const items: RevealItem[] = pack.photos.map(ph => {
@@ -184,7 +197,7 @@ onMounted(() => {
             }
           })
 
-          packRevealData.value = { items, firstYear: pack.photos[0]!.year }
+          packRevealData.value = { items, firstYear: pack.photos[0]!.year, completedYears }
         }
       }
     }
@@ -305,6 +318,7 @@ function onTouchEnd(e: TouchEvent) {
         :items="packRevealData.items"
         :first-year="packRevealData.firstYear"
         :is-last-pack="isAlbumComplete"
+        :completed-years="packRevealData.completedYears"
         @go="onPackGo"
         @epilogue="onPackEpilogue"
       />

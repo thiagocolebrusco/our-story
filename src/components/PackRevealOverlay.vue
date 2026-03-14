@@ -12,6 +12,7 @@ const props = defineProps<{
   items: RevealItem[]
   firstYear: number
   isLastPack?: boolean
+  completedYears?: { year: number; title: string }[]
 }>()
 
 const emit = defineEmits<{
@@ -114,7 +115,7 @@ onMounted(runAnimation)
 
       <!-- Photos row (replaces pack card after burst) -->
       <Transition name="photos-appear">
-        <div v-if="packGone" class="photos-row">
+        <div v-if="packGone" class="photos-row" :class="{ 'photos-compact': items.length >= 5 }">
           <TransitionGroup name="photo-fly">
             <div
               v-for="(item, i) in items.slice(0, revealedCount)"
@@ -154,6 +155,25 @@ onMounted(runAnimation)
     <!-- ── Footer (years + CTA button) ── -->
     <Transition name="footer-rise">
       <div v-if="showButton" class="footer">
+
+        <!-- Year completion badges (shown whenever a year is newly complete) -->
+        <Transition name="year-complete-rise">
+          <div v-if="completedYears?.length" class="year-complete-block">
+            <div class="year-complete-label">
+              {{ completedYears.length === 1 ? 'Ano revelado completo' : 'Anos revelados completos' }} ✦
+            </div>
+            <div class="year-complete-btns">
+              <button
+                v-for="cy in completedYears"
+                :key="cy.year"
+                class="year-complete-btn"
+                @click="emit('go', cy.year)"
+              >
+                {{ cy.year }} · {{ cy.title }} ›
+              </button>
+            </div>
+          </div>
+        </Transition>
 
         <!-- Regular footer -->
         <template v-if="!isLastPack">
@@ -405,6 +425,12 @@ onMounted(runAnimation)
   max-width: 370px;
 }
 
+/* Compact mode for 5+ photos */
+.photos-compact {
+  gap: 7px;
+  max-width: 340px;
+}
+
 /* Individual photo card (polaroid style) */
 .photo-card {
   display: flex;
@@ -419,6 +445,12 @@ onMounted(runAnimation)
   flex-shrink: 0;
 }
 
+/* Compact card dimensions */
+.photos-compact .photo-card {
+  width: 84px;
+  padding: 5px 5px 8px;
+}
+
 .photo-img-area {
   width: 92px;
   height: 108px;
@@ -427,6 +459,12 @@ onMounted(runAnimation)
   margin-bottom: 8px;
   position: relative;
   overflow: hidden;
+}
+
+.photos-compact .photo-img-area {
+  width: 74px;
+  height: 84px;
+  margin-bottom: 6px;
 }
 
 .photo-img {
@@ -514,6 +552,57 @@ onMounted(runAnimation)
   opacity: 0;
   transform: translateY(20px);
 }
+
+/* ── Year completion badges ── */
+.year-complete-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(196, 151, 59, 0.18);
+  margin-bottom: 2px;
+}
+
+.year-complete-label {
+  font-family: 'Lato', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(196, 151, 59, 0.7);
+}
+
+.year-complete-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.year-complete-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(196, 151, 59, 0.08);
+  border: 1px solid rgba(196, 151, 59, 0.3);
+  border-radius: 10px;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(232, 200, 122, 0.9);
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.year-complete-btn:active { background: rgba(196, 151, 59, 0.18); }
+
+.year-complete-rise-enter-active {
+  transition: opacity 0.4s ease 0.1s, transform 0.4s cubic-bezier(0.32, 0.72, 0, 1) 0.1s;
+}
+.year-complete-rise-enter-from { opacity: 0; transform: translateY(12px); }
 
 /* ── Completion rain ── */
 .complete-rain {
