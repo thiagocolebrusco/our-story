@@ -58,11 +58,11 @@ function onTitleTap(e: Event) {
 
           <div class="tagline">{{ coverData.tagline }}</div>
 
-          <!-- Decorative photos mockup -->
+          <!-- Decorative photos -->
           <div class="mini-photos">
-            <div class="mini-photo" style="transform: rotate(-4deg) translateY(4px)"></div>
-            <div class="mini-photo featured" style="transform: rotate(0deg)"></div>
-            <div class="mini-photo" style="transform: rotate(3.5deg) translateY(4px)"></div>
+            <div class="mini-photo" style="transform: rotate(-4deg) translateY(4px); background-image: url('/photos/2009-1.jpg')"></div>
+            <div class="mini-photo featured" style="transform: rotate(0deg); background-image: url('/photos/2019-5.jpg')"></div>
+            <div class="mini-photo" style="transform: rotate(3.5deg) translateY(4px); background-image: url('/photos/2025-2.jpg')"></div>
           </div>
         </div>
 
@@ -230,7 +230,9 @@ function onTitleTap(e: Event) {
 .mini-photo {
   width: 58px;
   height: 66px;
-  background: linear-gradient(135deg, rgba(255,254,248,0.12), rgba(255,254,248,0.06));
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(255, 254, 248, 0.06);
   border: 1px solid rgba(255, 254, 248, 0.2);
   box-shadow: 2px 3px 10px rgba(0,0,0,0.4);
 }
@@ -238,8 +240,11 @@ function onTitleTap(e: Event) {
 .mini-photo.featured {
   width: 68px;
   height: 76px;
-  background: linear-gradient(135deg, rgba(255,254,248,0.16), rgba(255,254,248,0.08));
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(255, 254, 248, 0.08);
   border-color: rgba(201, 160, 90, 0.35);
+  box-shadow: 3px 4px 16px rgba(0,0,0,0.5);
 }
 
 .reveal-progress {
