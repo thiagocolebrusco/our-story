@@ -258,6 +258,8 @@ function onTouchEnd(e: TouchEvent) {
       <AlbumCover
         v-if="currentPage === 0"
         key="cover"
+        :unlocked-count="unlockedPhotos.size"
+        :total-count="pages.flatMap(p => p.photos).length"
         @next="goNext"
         @summary="openSummary"
         @admin="openAdmin"

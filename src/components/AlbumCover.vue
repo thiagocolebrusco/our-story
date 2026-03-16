@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { coverData } from '../data/album'
 
+const props = defineProps<{
+  unlockedCount: number
+  totalCount: number
+}>()
+
 const emit = defineEmits<{ (e: 'next'): void; (e: 'summary'): void; (e: 'admin'): void }>()
+
+const percentage = computed(() =>
+  props.totalCount > 0 ? Math.round(props.unlockedCount / props.totalCount * 100) : 0
+)
 
 // Secret tap counter on the title — 5 taps within 3s opens admin
 const tapCount = ref(0)
@@ -59,6 +68,14 @@ function onTitleTap(e: Event) {
 
         <!-- Bottom ornament -->
         <div class="ornament bottom">✦ ♡ ✦</div>
+
+        <!-- Reveal progress -->
+        <div class="reveal-progress">
+          <div class="progress-track">
+            <div class="progress-fill" :style="{ width: percentage + '%' }"></div>
+          </div>
+          <span class="progress-label">{{ percentage }}% revelado</span>
+        </div>
 
         <div class="tap-hint">toque para começar</div>
 
@@ -223,6 +240,39 @@ function onTitleTap(e: Event) {
   height: 76px;
   background: linear-gradient(135deg, rgba(255,254,248,0.16), rgba(255,254,248,0.08));
   border-color: rgba(201, 160, 90, 0.35);
+}
+
+.reveal-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 60%;
+  margin-bottom: 2px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background: rgba(201, 160, 90, 0.18);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(196, 151, 59, 0.6), rgba(232, 200, 122, 0.9));
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.progress-label {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: 9px;
+  color: rgba(220, 185, 140, 0.45);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 
 .tap-hint {
